@@ -667,6 +667,10 @@ td.type-noble{background:linear-gradient(135deg,var(--noble-l),var(--noble));col
 </section>
 
 <script>
+/* ============ НЕ ВОССТАНАВЛИВАТЬ СКРОЛЛ ПРИ ПЕРЕЗАГРУЗКЕ ============ */
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+window.addEventListener("load", () => window.scrollTo(0, 0));
+
 /* ============ ДАННЫЕ ЭЛЕМЕНТОВ ============ */
 function subgroupOf(g){return(g<=2||g>=13)?"A":"B";}
 const raw=[
@@ -1497,7 +1501,8 @@ function trHardNeutrons(){
   };
 }
 
-function newTask(){
+/* focusInput=false при инициализации — чтобы страница не уезжала к тренажёру */
+function newTask(focusInput=true){
   const diff=document.getElementById("trainerDifficulty").value;
   const pool=diff==="all"?["easy","medium","hard"]:[diff];
   const d=pick(pool);
@@ -1509,7 +1514,7 @@ function newTask(){
   document.getElementById("taskAnswer").value="";
   document.getElementById("trainerFeedback").hidden=true;
   document.getElementById("trainerSolution").hidden=true;
-  document.getElementById("taskAnswer").focus();
+  if(focusInput)document.getElementById("taskAnswer").focus();
 }
 
 function checkAnswer(){
@@ -1570,7 +1575,8 @@ renderRef();
 updateTopicFilter();
 renderFormulas();
 updateTrainerStats();
-newTask();
+newTask(false);                
+window.scrollTo(0, 0);          
 </script>
 </body>
 </html>
