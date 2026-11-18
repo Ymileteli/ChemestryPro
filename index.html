@@ -793,3 +793,336 @@ function applyFilters() {
     return true;
   });
 }
+
+searchInput.addEventListener("input", applyFilters);
+filterPeriod.addEventListener("change", applyFilters);
+filterGroup.addEventListener("change", applyFilters);
+filterType.addEventListener("change", applyFilters);
+schoolOnly.addEventListener("change", applyFilters);
+
+/* ================================================================
+   КАРТОЧКА ЭЛЕМЕНТА
+   ================================================================ */
+let compareList = [];
+
+function openCard(z) {
+  const el = elements[z - 1];
+  if (!el) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const typeLabel = { M:"металл", N:"неметалл", A:"амфотерный", G:"благородный газ" }[el.type];
+
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" aria-label="Закрыть">×</button>
+      <h2 id="modalTitle">${el.nameRu} (${el.symbol})</h2>
+      <p class="subtitle">${el.nameLat} · Z = ${el.z} · Ar = ${el.ar}</p>
+
+      <div class="section">
+        <h3>Идентификация</h3>
+        <div class="field"><span class="label">Порядковый номер Z</span><span class="value">${el.z}</span></div>
+        <div class="field"><span class="label">Относительная атомная масса Ar</span><span class="value">${el.ar}</span></div>
+        <div class="field"><span class="label">Период</span><span class="value">${el.period}</span></div>
+        <div class="field"><span class="label">Группа</span><span class="value">${el.group}</span></div>
+        <div class="field"><span class="label">Подгруппа</span><span class="value">${el.subgroup === "A" ? "главная (A)" : "побочная (B)"}</span></div>
+        <div class="field"><span class="label">Тип элемента</span><span class="value">${typeLabel}</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Строение атома</h3>
+        <div class="field"><span class="label">Заряд ядра</span><span class="value">${el.nucleusCharge}</span></div>
+        <div class="field"><span class="label">Протоны / Нейтроны / Электроны</span><span class="value">${el.protons} / ${el.neutrons} / ${el.electrons}</span></div>
+        <div class="field"><span class="label">Распределение по уровням</span><span class="value">${el.shells.join(", ")}</span></div>
+        <div class="field"><span class="label">Электронная формула</span><span class="value">${el.electronFormula}</span></div>
+        <p class="hint">Число протонов = Z, число электронов = Z, число нейтронов ≈ Ar − Z. Число уровней = номер периода.</p>
+      </div>
+
+      <div class="section">
+        <h3>Валентность и степени окисления</h3>
+        <div class="field"><span class="label">Типичные валентности</span><span class="value">${el.valences.map(v => v === 0 ? "0" : ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"][v] || v).join(", ")}</span></div>
+        <div class="field"><span class="label">Основные степени окисления</span><span class="value">${el.oxidationStates.join(", ")}</span></div>
+        <p class="hint">Высшая валентность часто совпадает с номером группы (для главных подгрупп).</p>
+      </div>
+
+      <div class="section">
+        <h3>Простое вещество</h3>
+        <div class="field"><span class="label">Формула</span><span class="value">${el.simpleFormula}</span></div>
+        <div class="field"><span class="label">Агрегатное состояние</span><span class="value">${el.aggregate}</span></div>
+        <div class="field"><span class="label">Цвет</span><span class="value">${el.color}</span></div>
+        <div class="field"><span class="label">Плотность</span><span class="value">${el.density}</span></div>
+        <div class="field"><span class="label">t плавления</span><span class="value">${el.meltingPoint}</span></div>
+        <div class="field"><span class="label">t кипения</span><span class="value">${el.boilingPoint}</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Химические свойства (школьный курс)</h3>
+        <div class="field"><span class="label">Оксид</span><span class="value">${el.oxideFormula} — ${el.oxideCharacter}</span></div>
+        <div class="field"><span class="label">Гидроксид</span><span class="value">${el.hydroxideFormula} — ${el.hydroxideCharacter}</span></div>
+        ${el.acidFormula !== "—" ? `<div class="field"><span class="label">Кислота</span><span class="value">${el.acidFormula}</span></div>` : ""}
+        ${el.baseFormula !== "—" ? `<div class="field"><span class="label">Основание</span><span class="value">${el.baseFormula}</span></div>` : ""}
+      </div>
+
+      <div class="section">
+        <h3>Применение и нахождение в природе</h3>
+        ${el.facts.map(f => `<div class="field"><span class="value">• ${f}</span></div>`).join("")}
+      </div>
+
+      <div class="section">
+        <h3>Задачи</h3>
+        ${el.tasks.map(t => `<div class="task-box"><div>${t.condition}</div><div class="solution">${t.solution}</div></div>`).join("")}
+      </div>
+
+      <button class="btn-compare" onclick="addToCompare(${el.z})">Добавить в сравнение</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector(".modal-close").focus();
+}
+
+/* ================================================================
+   СРАВНЕНИЕ
+   ================================================================ */
+function addToCompare(z) {
+  if (compareList.includes(z)) return;
+  if (compareList.length >= 3) compareList.shift();
+  compareList.push(z);
+  renderCompareBar();
+}
+
+function renderCompareBar() {
+  let bar = document.querySelector(".compare-bar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.className = "compare-bar";
+    document.body.appendChild(bar);
+  }
+  if (compareList.length === 0) { bar.remove(); return; }
+  bar.innerHTML = compareList.map(z => {
+    const el = elements[z - 1];
+    return `<span class="chip">${el.symbol} (${el.nameRu}) <button onclick="removeFromCompare(${z})" aria-label="Убрать">×</button></span>`;
+  }).join("") + `<span style="font-size:14px;color:var(--text-secondary)">Сравнение (${compareList.length}/3)</span>`;
+}
+
+function removeFromCompare(z) {
+  compareList = compareList.filter(x => x !== z);
+  renderCompareBar();
+}
+
+/* ================================================================
+   КАЛЬКУЛЯТОРЫ
+   ================================================================ */
+const AR_MAP = {};
+elements.forEach(el => { AR_MAP[el.symbol] = el.ar; });
+
+// Парсер формулы с поддержкой скобок и индексов
+function parseFormula(formula) {
+  formula = formula.replace(/\s+/g, "");
+  let pos = 0;
+  function parseGroup() {
+    const counts = {};
+    while (pos < formula.length) {
+      const ch = formula[pos];
+      if (ch === "(") {
+        pos++;
+        const inner = parseGroup();
+        if (formula[pos] !== ")") throw new Error("Не хватает закрывающей скобки");
+        pos++;
+        const num = parseNumber();
+        for (const [sym, cnt] of Object.entries(inner)) counts[sym] = (counts[sym] || 0) + cnt * num;
+      } else if (ch === ")") {
+        return counts;
+      } else if (/[A-Z]/.test(ch)) {
+        let sym = ch; pos++;
+        while (pos < formula.length && /[a-z]/.test(formula[pos])) { sym += formula[pos]; pos++; }
+        const num = parseNumber();
+        counts[sym] = (counts[sym] || 0) + num;
+      } else {
+        throw new Error(`Неожиданный символ: ${ch}`);
+      }
+    }
+    return counts;
+  }
+  function parseNumber() {
+    let num = "";
+    while (pos < formula.length && /[0-9]/.test(formula[pos])) { num += formula[pos]; pos++; }
+    return num ? parseInt(num) : 1;
+  }
+  const counts = parseGroup();
+  if (pos !== formula.length) throw new Error("Лишние символы в формуле");
+  return counts;
+}
+
+function molarMassOf(counts) {
+  let M = 0;
+  const parts = [];
+  for (const [sym, cnt] of Object.entries(counts)) {
+    if (!(sym in AR_MAP)) throw new Error(`Неизвестный элемент: ${sym}`);
+    const ar = AR_MAP[sym];
+    M += ar * cnt;
+    parts.push(`${ar}·${cnt}`);
+  }
+  return { M: Math.round(M * 100) / 100, parts };
+}
+
+function calculateMolarMass() {
+  const input = document.getElementById("formulaInput").value.trim();
+  const out = document.getElementById("resultMolarMass");
+  if (!input) { out.textContent = "Введите формулу."; return; }
+  try {
+    const counts = parseFormula(input);
+    const { M, parts } = molarMassOf(counts);
+    const detail = Object.entries(counts).map(([sym, cnt]) => `${sym}: ${AR_MAP[sym]} × ${cnt}`).join("\n");
+    out.textContent = `M(${input}) = ${parts.join(" + ")} = ${M} г/моль\n\nПодробно:\n${detail}`;
+  } catch (e) {
+    out.textContent = "Ошибка: " + e.message;
+  }
+}
+
+function calculateMassFraction() {
+  const formula = document.getElementById("mfFormula").value.trim();
+  const sym = document.getElementById("mfElement").value.trim();
+  const out = document.getElementById("resultMassFraction");
+  if (!formula || !sym) { out.textContent = "Заполните оба поля."; return; }
+  try {
+    const counts = parseFormula(formula);
+    if (!(sym in counts)) throw new Error(`Элемент ${sym} не входит в формулу.`);
+    const { M } = molarMassOf(counts);
+    const ar = AR_MAP[sym];
+    const massEl = ar * counts[sym];
+    const omega = (massEl / M) * 100;
+    out.textContent = `ω(${sym}) = (${ar} × ${counts[sym]}) / ${M} × 100% = ${omega.toFixed(1)}%`;
+  } catch (e) {
+    out.textContent = "Ошибка: " + e.message;
+  }
+}
+
+function toggleAmountFields() {
+  const mode = document.getElementById("amountMode").value;
+  document.getElementById("amountMassFields").hidden = mode !== "mass";
+  document.getElementById("amountVolumeFields").hidden = mode !== "volume";
+}
+
+function calculateAmount() {
+  const mode = document.getElementById("amountMode").value;
+  const out = document.getElementById("resultAmount");
+  if (mode === "mass") {
+    const M = parseFloat(document.getElementById("amountM").value);
+    const m = parseFloat(document.getElementById("amountm").value);
+    if (!M || !m) { out.textContent = "Введите M и m."; return; }
+    const n = m / M;
+    out.textContent = `n = m / M = ${m} г / ${M} г/моль = ${n.toFixed(3)} моль`;
+  } else {
+    const V = parseFloat(document.getElementById("amountV").value);
+    if (!V) { out.textContent = "Введите V."; return; }
+    const n = V / 22.4;
+    out.textContent = `n = V / Vm = ${V} л / 22,4 л/моль = ${n.toFixed(3)} моль`;
+  }
+}
+
+function calculateParticles() {
+  const n = parseFloat(document.getElementById("particlesN").value);
+  const out = document.getElementById("resultParticles");
+  if (!n) { out.textContent = "Введите n."; return; }
+  const N = n * 6.02e23;
+  out.textContent = `N = n × N_A = ${n} моль × 6,02·10²³ моль⁻¹ = ${N.toExponential(2)} частиц`;
+}
+
+// Переключение вкладок калькулятора
+document.querySelectorAll(".calc-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".calc-tabs button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".calc-panel").forEach(p => p.hidden = true);
+    document.getElementById("calc-" + btn.dataset.calc).hidden = false;
+  });
+});
+
+/* ================================================================
+   ТРЕНАЖЁР
+   ================================================================ */
+let currentTask = null;
+
+const taskTemplates = [
+  {
+    generate() {
+      const el = elements.filter(e => e.isSchool && e.ar > 0)[Math.floor(Math.random() * elements.filter(e => e.isSchool).length)];
+      return {
+        text: `Вычислите молярную массу простого вещества ${el.symbol} (Ar = ${el.ar}).`,
+        answer: el.ar,
+        solution: `M(${el.symbol}) = ${el.ar} г/моль.`
+      };
+    }
+  },
+  {
+    generate() {
+      const el = elements.filter(e => e.isSchool)[Math.floor(Math.random() * elements.filter(e => e.isSchool).length)];
+      return {
+        text: `Сколько протонов и электронов в атоме ${el.nameRu} (Z = ${el.z})?`,
+        answer: el.z,
+        solution: `Число протонов = Z = ${el.z}. Число электронов = Z = ${el.z}.`
+      };
+    }
+  },
+  {
+    generate() {
+      const el = elements.filter(e => e.isSchool && e.valences.length > 0)[Math.floor(Math.random() * elements.filter(e => e.isSchool && e.valences.length > 0).length)];
+      const v = el.valences[0];
+      return {
+        text: `Какова типичная валентность ${el.nameRu} (${el.symbol})?`,
+        answer: v,
+        solution: `Типичная валентность ${el.symbol} — ${["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"][v] || v}.`
+      };
+    }
+  }
+];
+
+function newTask() {
+  const template = taskTemplates[Math.floor(Math.random() * taskTemplates.length)];
+  currentTask = template.generate();
+  document.getElementById("taskText").textContent = currentTask.text;
+  document.getElementById("taskAnswer").value = "";
+  document.getElementById("trainerFeedback").hidden = true;
+  document.getElementById("trainerSolution").hidden = true;
+}
+
+function checkAnswer() {
+  if (!currentTask) return;
+  const user = document.getElementById("taskAnswer").value.trim();
+  const fb = document.getElementById("trainerFeedback");
+  const correct = String(currentTask.answer);
+  fb.hidden = false;
+  if (user === correct || (parseFloat(user) === parseFloat(correct))) {
+    fb.className = "trainer-feedback correct";
+    fb.textContent = "Верно! Молодец.";
+  } else {
+    fb.className = "trainer-feedback incorrect";
+    fb.textContent = `Неверно. Правильный ответ: ${correct}. Нажмите «Показать решение», чтобы разобраться.`;
+  }
+}
+
+function showSolution() {
+  if (!currentTask) return;
+  const sol = document.getElementById("trainerSolution");
+  sol.hidden = false;
+  sol.textContent = currentTask.solution;
+}
+
+/* ================================================================
+   ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ
+   ================================================================ */
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const html = document.documentElement;
+  const current = html.getAttribute("data-theme");
+  html.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+});
+
+/* ================================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ================================================================ */
+renderTable();
+</script>
+</body>
+</html>
