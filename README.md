@@ -6,7 +6,7 @@
 
 После публикации через GitHub Pages сайт будет доступен по адресу:
 
-https://ТВОЙ-ЛОГИН.github.io/periodic-table/
+https://ymileteli.github.io/ChemestryPro/
 
 ✨ Возможности
 🔬 Интерактивная таблица
