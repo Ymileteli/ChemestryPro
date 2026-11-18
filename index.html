@@ -5,299 +5,178 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Расширенная таблица Менделеева — помощник в задачах</title>
 <style>
-/* ===== БАЗОВЫЕ СТИЛИ И ПЕРЕМЕННЫЕ ===== */
-:root {
-  --bg: #f8f9fa;
-  --surface: #ffffff;
-  --text: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --border: #d0d7de;
-  --accent: #2563eb;
-  --accent-light: #dbeafe;
-  --metal: #fde68a;
-  --nonmetal: #bbf7d0;
-  --amphoteric: #c7d2fe;
-  --noble: #e9d5ff;
-  --school: #f59e0b;
-  --radius: 8px;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-[data-theme="dark"] {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --text: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border: #334155;
-  --accent: #60a5fa;
-  --accent-light: #1e3a5f;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: var(--font);
-  font-size: 16px;
-  line-height: 1.5;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
-a { color: var(--accent); }
-
-/* ===== ШАПКА ===== */
-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-header h1 { font-size: 1.25rem; font-weight: 600; }
-header .search-box {
-  flex: 1 1 200px;
-  min-width: 180px;
-  padding: 8px 12px;
-  font-size: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--text);
-}
-.theme-toggle {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 16px;
-  color: var(--text);
-}
-
-/* ===== ФИЛЬТРЫ ===== */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  align-items: center;
-}
-.filters select, .filters label {
-  font-size: 16px;
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-}
-.filters label { display: flex; align-items: center; gap: 6px; cursor: pointer; border: none; background: none; }
-.filters input[type="checkbox"] { width: 18px; height: 18px; }
-
-/* ===== ТАБЛИЦА ===== */
-.table-wrap {
-  overflow-x: auto;
-  padding: 16px;
-  -webkit-overflow-scrolling: touch;
-}
-table.periodic {
-  border-collapse: separate;
-  border-spacing: 4px;
-  margin: 0 auto;
-  min-width: 900px;
-}
-table.periodic td, table.periodic th {
-  width: 64px;
-  height: 64px;
-  text-align: center;
-  vertical-align: middle;
-  border-radius: 6px;
-  font-size: 12px;
-  position: relative;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.1s;
-  user-select: none;
-}
-table.periodic th {
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: default;
-  height: 28px;
-  font-size: 11px;
-}
-table.periodic td:hover, table.periodic td:focus-visible {
-  border-color: var(--accent);
-  outline: none;
-  transform: scale(1.05);
-}
-table.periodic td.school-marker::after {
-  content: "★";
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: 10px;
-  color: var(--school);
-}
-table.periodic td .sym { font-weight: 700; font-size: 15px; display: block; }
-table.periodic td .z { font-size: 9px; color: var(--text-secondary); display: block; }
-table.periodic td .mass { font-size: 9px; color: var(--text-secondary); display: block; }
-
-/* Цвета типов */
-td.type-metal { background: var(--metal); color: #1a1a1a; }
-td.type-nonmetal { background: var(--nonmetal); color: #1a1a1a; }
-td.type-amphoteric { background: var(--amphoteric); color: #1a1a1a; }
-td.type-noble { background: var(--noble); color: #1a1a1a; }
-[data-theme="dark"] td.type-metal { background: #78350f; color: #fef3c7; }
-[data-theme="dark"] td.type-nonmetal { background: #14532d; color: #dcfce7; }
-[data-theme="dark"] td.type-amphoteric { background: #1e3a5f; color: #dbeafe; }
-[data-theme="dark"] td.type-noble { background: #4c1d95; color: #ede9fe; }
-
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 200;
-  padding: 16px;
-}
-.modal {
-  background: var(--surface);
-  border-radius: var(--radius);
-  max-width: 720px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 24px;
-  position: relative;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-}
-.modal-close {
-  position: absolute; top: 12px; right: 16px;
-  background: none; border: none; font-size: 28px;
-  cursor: pointer; color: var(--text-secondary);
-  line-height: 1;
-}
-.modal h2 { font-size: 1.5rem; margin-bottom: 4px; }
-.modal .subtitle { color: var(--text-secondary); margin-bottom: 16px; }
-.modal .section { margin-bottom: 16px; }
-.modal .section h3 {
-  font-size: 0.95rem; text-transform: uppercase;
-  letter-spacing: 0.5px; color: var(--accent);
-  margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
-}
-.modal .field { display: flex; gap: 8px; padding: 3px 0; font-size: 15px; }
-.modal .field .label { color: var(--text-secondary); min-width: 200px; flex-shrink: 0; }
-.modal .field .value { font-weight: 500; }
-.modal .hint { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-style: italic; }
-.modal .btn-compare {
-  margin-top: 12px; padding: 8px 16px; font-size: 15px;
-  background: var(--accent); color: #fff; border: none;
-  border-radius: var(--radius); cursor: pointer;
-}
-.modal .task-box {
-  background: var(--accent-light); border-radius: var(--radius);
-  padding: 12px; margin-top: 8px; font-size: 14px;
-}
-.modal .task-box .solution { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
-
-/* ===== ПАНЕЛЬ СРАВНЕНИЯ ===== */
-.compare-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--surface); border-top: 2px solid var(--accent);
-  padding: 8px 16px; display: flex; gap: 12px; align-items: center;
-  flex-wrap: wrap; z-index: 150;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-}
-.compare-bar .chip {
-  background: var(--accent-light); padding: 4px 12px;
-  border-radius: 20px; font-size: 14px; font-weight: 500;
-  display: flex; align-items: center; gap: 6px;
-}
-.compare-bar .chip button {
-  background: none; border: none; cursor: pointer;
-  font-size: 16px; color: var(--text-secondary); line-height: 1;
-}
-
-/* ===== КАЛЬКУЛЯТОРЫ ===== */
-.calc-section {
-  max-width: 800px; margin: 24px auto; padding: 0 16px;
-}
-.calc-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.calc-tabs button {
-  padding: 8px 16px; font-size: 15px; border: 1px solid var(--border);
-  background: var(--surface); border-radius: var(--radius);
-  cursor: pointer; color: var(--text);
-}
-.calc-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.calc-panel {
-  background: var(--surface); border-radius: var(--radius);
-  padding: 20px; border: 1px solid var(--border);
-}
-.calc-panel label { display: block; margin-bottom: 4px; font-weight: 500; }
-.calc-panel .hint { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
-.calc-panel input {
-  width: 100%; padding: 10px 12px; font-size: 16px;
-  border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--bg); color: var(--text); margin-bottom: 12px;
-}
-.calc-panel button {
-  padding: 10px 20px; font-size: 16px; background: var(--accent);
-  color: #fff; border: none; border-radius: var(--radius); cursor: pointer;
-}
-.calc-result {
-  margin-top: 16px; padding: 12px; background: var(--accent-light);
-  border-radius: var(--radius); font-size: 15px; line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-/* ===== ТРЕНАЖЁР ===== */
-.trainer-section { max-width: 800px; margin: 24px auto; padding: 0 16px; }
-.trainer-card {
-  background: var(--surface); border-radius: var(--radius);
-  padding: 20px; border: 1px solid var(--border);
-}
-.trainer-card .task-text { font-size: 17px; margin-bottom: 12px; }
-.trainer-card input { padding: 10px 12px; font-size: 16px; width: 200px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); }
-.trainer-card button { padding: 10px 20px; font-size: 16px; margin-left: 8px; border: none; border-radius: var(--radius); cursor: pointer; }
-.trainer-card .btn-check { background: var(--accent); color: #fff; }
-.trainer-card .btn-solution { background: var(--border); color: var(--text); }
-.trainer-feedback { margin-top: 12px; padding: 12px; border-radius: var(--radius); font-size: 15px; }
-.trainer-feedback.correct { background: #dcfce7; color: #14532d; }
-.trainer-feedback.incorrect { background: #fee2e2; color: #7f1d1d; }
-.trainer-solution { margin-top: 12px; padding: 12px; background: var(--accent-light); border-radius: var(--radius); font-size: 15px; line-height: 1.7; white-space: pre-wrap; }
-
-/* ===== «КАК ЧИТАТЬ ТАБЛИЦУ» ===== */
-.guide-section { max-width: 800px; margin: 24px auto; padding: 0 16px 80px; }
-.guide-section h2 { margin-bottom: 12px; }
-.guide-section p { margin-bottom: 10px; }
-
-/* ===== АДАПТИВНОСТЬ ===== */
-@media (max-width: 600px) {
-  header h1 { font-size: 1rem; }
-  table.periodic td, table.periodic th { width: 48px; height: 48px; font-size: 10px; }
-  table.periodic td .sym { font-size: 12px; }
-  table.periodic td .z, table.periodic td .mass { font-size: 8px; }
-  .modal .field .label { min-width: 140px; }
-  .compare-bar { padding: 6px 12px; }
+:root{--bg:#f8f9fa;--surface:#fff;--text:#1a1a1a;--text2:#4a4a4a;--border:#d0d7de;--accent:#2563eb;--accent-l:#dbeafe;--metal:#fde68a;--nonmetal:#bbf7d0;--amphoteric:#c7d2fe;--noble:#e9d5ff;--school:#f59e0b;--radius:8px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme="dark"]{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;--accent:#60a5fa;--accent-l:#1e3a5f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:16px;line-height:1.5;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--accent)}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.25rem;font-weight:600}
+.search-box{flex:1 1 200px;min-width:180px;padding:8px 12px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:16px;color:var(--text)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center}
+.filters select,.filters label{font-size:16px;padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text)}
+.filters label{display:flex;align-items:center;gap:6px;cursor:pointer;border:none;background:none}
+.filters input[type="checkbox"]{width:18px;height:18px}
+.table-wrap{overflow-x:auto;padding:16px;-webkit-overflow-scrolling:touch}
+table.periodic{border-collapse:separate;border-spacing:4px;margin:0 auto;min-width:900px}
+table.periodic td,table.periodic th{width:64px;height:64px;text-align:center;vertical-align:middle;border-radius:6px;font-size:12px;position:relative;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .1s;user-select:none}
+table.periodic th{background:transparent;color:var(--text2);font-weight:600;cursor:default;height:28px;font-size:11px}
+table.periodic td:hover,table.periodic td:focus-visible{border-color:var(--accent);outline:none;transform:scale(1.05)}
+table.periodic td.school-marker::after{content:"★";position:absolute;top:2px;right:4px;font-size:10px;color:var(--school)}
+table.periodic td .sym{font-weight:700;font-size:15px;display:block}
+table.periodic td .z{font-size:9px;color:var(--text2);display:block}
+table.periodic td .mass{font-size:9px;color:var(--text2);display:block}
+td.type-metal{background:var(--metal);color:#1a1a1a}
+td.type-nonmetal{background:var(--nonmetal);color:#1a1a1a}
+td.type-amphoteric{background:var(--amphoteric);color:#1a1a1a}
+td.type-noble{background:var(--noble);color:#1a1a1a}
+[data-theme="dark"] td.type-metal{background:#78350f;color:#fef3c7}
+[data-theme="dark"] td.type-nonmetal{background:#14532d;color:#dcfce7}
+[data-theme="dark"] td.type-amphoteric{background:#1e3a5f;color:#dbeafe}
+[data-theme="dark"] td.type-noble{background:#4c1d95;color:#ede9fe}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal{background:var(--surface);border-radius:var(--radius);max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:28px;cursor:pointer;color:var(--text2);line-height:1}
+.modal h2{font-size:1.5rem;margin-bottom:4px}
+.modal .subtitle{color:var(--text2);margin-bottom:16px}
+.modal .section{margin-bottom:16px}
+.modal .section h3{font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.modal .field{display:flex;gap:8px;padding:3px 0;font-size:15px}
+.modal .field .label{color:var(--text2);min-width:200px;flex-shrink:0}
+.modal .field .value{font-weight:500}
+.modal .hint{font-size:13px;color:var(--text2);margin-top:2px;font-style:italic}
+.modal .btn-compare{margin-top:12px;padding:8px 16px;font-size:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer}
+.modal .task-box{background:var(--accent-l);border-radius:var(--radius);padding:12px;margin-top:8px;font-size:14px}
+.modal .task-box .solution{margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)}
+.compare-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--accent);padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:150;box-shadow:0 -2px 8px rgba(0,0,0,.1)}
+.compare-bar .chip{background:var(--accent-l);padding:4px 12px;border-radius:20px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px}
+.compare-bar .chip button{background:none;border:none;cursor:pointer;font-size:16px;color:var(--text2);line-height:1}
+.calc-section{max-width:800px;margin:24px auto;padding:0 16px}
+.calc-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.calc-tabs button{padding:8px 16px;font-size:15px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);cursor:pointer;color:var(--text)}
+.calc-tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.calc-panel{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border)}
+.calc-panel label{display:block;margin-bottom:4px;font-weight:500}
+.calc-panel .hint{font-size:13px;color:var(--text2);margin-bottom:8px}
+.calc-panel input{width:100%;padding:10px 12px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);margin-bottom:12px}
+.calc-panel button{padding:10px 20px;font-size:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer}
+.calc-result{margin-top:16px;padding:12px;background:var(--accent-l);border-radius:var(--radius);font-size:15px;line-height:1.7;white-space:pre-wrap}
+.formulas-section{max-width:1000px;margin:40px auto;padding:24px 16px;background:var(--bg);border-top:3px solid var(--accent);border-bottom:3px solid var(--accent)}
+.formulas-section h2{font-size:1.5rem;margin-bottom:8px}
+.formulas-section .section-intro{color:var(--text2);margin-bottom:16px;font-size:15px}
+.subject-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border)}
+.subject-tabs button{padding:10px 24px;font-size:17px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s}
+.subject-tabs button:hover{color:var(--text)}
+.subject-tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.formulas-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.formulas-controls input[type=search],.formulas-controls select{font-size:16px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+.formulas-controls input[type=search]{flex:1 1 200px;min-width:180px}
+.formulas-controls label{display:flex;align-items:center;gap:6px;font-size:15px;cursor:pointer}
+.formulas-controls input[type=checkbox]{width:18px;height:18px}
+.formulas-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:700px){.formulas-grid{grid-template-columns:1fr 1fr}}
+.formula-card{background:var(--surface);border:1px solid var(--border);border-left:6px solid var(--accent);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.formula-card[data-topic="calc"]{border-left-color:#2563eb}
+.formula-card[data-topic="valence"]{border-left-color:#16a34a}
+.formula-card[data-topic="oxstate"]{border-left-color:#d97706}
+.formula-card[data-topic="equations"]{border-left-color:#9333ea}
+.formula-card[data-topic="reactions"]{border-left-color:#db2777}
+.formula-card[data-topic="classes"]{border-left-color:#0891b2}
+.formula-card[data-topic="atom"]{border-left-color:#dc2626}
+.formula-card[data-topic="motion"]{border-left-color:#2563eb}
+.formula-card[data-topic="density"]{border-left-color:#0891b2}
+.formula-card[data-topic="forces"]{border-left-color:#16a34a}
+.formula-card[data-topic="work"]{border-left-color:#d97706}
+.formula-card[data-topic="energy"]{border-left-color:#ca8a04}
+.formula-card[data-topic="heat"]{border-left-color:#db2777}
+.formula-card[data-topic="electricity"]{border-left-color:#9333ea}
+.formula-card .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.formula-card .card-title{font-size:17px;font-weight:600;line-height:1.3}
+.formula-card .badges{display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0}
+.formula-card .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:var(--accent-l);color:var(--accent);white-space:nowrap}
+[data-theme="dark"] .formula-card .badge{background:#1e3a5f;color:#93c5fd}
+.formula-card .badge.topic{background:#f1f5f9;color:var(--text2)}
+[data-theme="dark"] .formula-card .badge.topic{background:#334155;color:#cbd5e1}
+.formula-card .main-formula{font-size:20px;font-weight:700;text-align:center;padding:12px;background:var(--bg);border-radius:var(--radius);font-family:"Cambria","Georgia",serif;line-height:1.5}
+.formula-card .formula-details{text-align:center;font-size:15px;color:var(--text2);font-family:"Cambria","Georgia",serif;line-height:1.6}
+.formula-card .what{font-size:14px;line-height:1.5}
+.formula-card .symbols{font-size:13px;color:var(--text2)}
+.formula-card .symbols div{padding:3px 0;border-bottom:1px dashed var(--border);line-height:1.5}
+.formula-card .symbols div:last-child{border-bottom:none}
+.formula-card .symbols strong{color:var(--text);font-family:"Cambria","Georgia",serif}
+.formula-card .symbols em{font-style:normal;color:var(--text2)}
+.formula-card .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.formula-card .card-actions button{font-size:14px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:.15s}
+.formula-card .card-actions button:hover{background:var(--accent-l)}
+.formula-card .card-actions button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.formula-card .card-actions button.fav-active{background:#fef3c7;color:#92400e;border-color:#f59e0b}
+[data-theme="dark"] .formula-card .card-actions button.fav-active{background:#78350f;color:#fde68a}
+.formula-card .example-box{background:var(--accent-l);border-radius:var(--radius);padding:12px;font-size:14px;line-height:1.6;margin-top:4px}
+[data-theme="dark"] .formula-card .example-box{background:#1e3a5f}
+.formula-card .example-box .task{font-weight:600;margin-bottom:6px}
+.formula-card .example-box .step{padding:2px 0;font-family:"Cambria","Georgia",serif}
+.formula-card .example-box .answer{margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-weight:600}
+.formula-card .tip{font-size:13px;color:var(--text2);background:#fef9c3;border-left:3px solid #eab308;padding:8px 10px;border-radius:4px;font-style:italic;line-height:1.5}
+[data-theme="dark"] .formula-card .tip{background:#422006;color:#fde68a}
+.formulas-section .empty-message{text-align:center;padding:24px;color:var(--text2);font-size:15px}
+.trainer-section{max-width:800px;margin:24px auto;padding:0 16px}
+.trainer-card{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--border)}
+.trainer-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);font-size:15px}
+.trainer-controls label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.trainer-controls select{font-size:15px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.trainer-stats{margin-left:auto;font-weight:600;font-size:14px;background:var(--accent-l);padding:4px 12px;border-radius:20px;color:var(--accent)}
+[data-theme="dark"] .trainer-stats{background:#1e3a5f;color:#93c5fd}
+.trainer-controls button{font-size:13px;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text)}
+.trainer-difficulty-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.trainer-difficulty-badge.easy{background:#dcfce7;color:#166534}
+.trainer-difficulty-badge.medium{background:#fef3c7;color:#92400e}
+.trainer-difficulty-badge.hard{background:#fee2e2;color:#991b1b}
+[data-theme="dark"] .trainer-difficulty-badge.easy{background:#14532d;color:#bbf7d0}
+[data-theme="dark"] .trainer-difficulty-badge.medium{background:#78350f;color:#fde68a}
+[data-theme="dark"] .trainer-difficulty-badge.hard{background:#7f1d1d;color:#fecaca}
+.trainer-card .task-text{font-size:17px;margin-bottom:12px;line-height:1.5}
+.trainer-card input{padding:10px 12px;font-size:16px;width:200px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.trainer-card button{padding:10px 20px;font-size:16px;margin-left:8px;border:none;border-radius:var(--radius);cursor:pointer}
+.trainer-card .btn-check{background:var(--accent);color:#fff}
+.trainer-card .btn-solution{background:var(--border);color:var(--text)}
+.trainer-feedback{margin-top:12px;padding:12px;border-radius:var(--radius);font-size:15px}
+.trainer-feedback.correct{background:#dcfce7;color:#14532d}
+.trainer-feedback.incorrect{background:#fee2e2;color:#7f1d1d}
+[data-theme="dark"] .trainer-feedback.correct{background:#14532d;color:#dcfce7}
+[data-theme="dark"] .trainer-feedback.incorrect{background:#7f1d1d;color:#fecaca}
+.trainer-solution{margin-top:12px;padding:12px;background:var(--accent-l);border-radius:var(--radius);font-size:15px;line-height:1.7}
+[data-theme="dark"] .trainer-solution{background:#1e3a5f}
+.guide-section{max-width:800px;margin:24px auto;padding:0 16px 80px}
+.guide-section h2{margin-bottom:12px}
+.guide-section p{margin-bottom:10px}
+@media(max-width:600px){
+header h1{font-size:1rem}
+table.periodic td,table.periodic th{width:48px;height:48px;font-size:10px}
+table.periodic td .sym{font-size:12px}
+table.periodic td .z,table.periodic td .mass{font-size:8px}
+.modal .field .label{min-width:140px}
+.compare-bar{padding:6px 12px}
+.formula-card{padding:12px}
+.formula-card .main-formula{font-size:17px;padding:10px}
+.formula-card .card-title{font-size:15px}
+.subject-tabs button{flex:1;padding:8px 12px;font-size:14px}
+.formulas-section{padding:16px 12px;margin:24px 0}
+.trainer-controls{flex-direction:column;align-items:stretch}
+.trainer-stats{margin-left:0;text-align:center}
+.trainer-card input{width:100%;margin-bottom:8px}
+.trainer-card button{margin-left:0;margin-top:6px;width:100%}
 }
 </style>
 </head>
 <body>
 
-<!-- ===== ШАПКА ===== -->
 <header>
   <h1>Расширенная таблица Менделеева</h1>
   <input type="search" class="search-box" id="searchInput" placeholder="Поиск: название, символ или номер…" aria-label="Поиск элемента">
   <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">🌙</button>
 </header>
 
-<!-- ===== ФИЛЬТРЫ ===== -->
 <div class="filters">
   <select id="filterPeriod" aria-label="Фильтр по периоду">
     <option value="">Все периоды</option>
@@ -305,10 +184,7 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
     <option value="4">4</option><option value="5">5</option><option value="6">6</option>
     <option value="7">7</option>
   </select>
-  <select id="filterGroup" aria-label="Фильтр по группе">
-    <option value="">Все группы</option>
-    <!-- заполняется JS -->
-  </select>
+  <select id="filterGroup" aria-label="Фильтр по группе"><option value="">Все группы</option></select>
   <select id="filterType" aria-label="Фильтр по типу">
     <option value="">Все типы</option>
     <option value="metal">Металлы</option>
@@ -319,7 +195,6 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
   <label><input type="checkbox" id="schoolOnly"> Только школьная программа</label>
 </div>
 
-<!-- ===== ТАБЛИЦА ===== -->
 <div class="table-wrap">
   <table class="periodic" id="periodicTable" aria-label="Периодическая таблица элементов">
     <thead id="tableHead"></thead>
@@ -327,7 +202,6 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
   </table>
 </div>
 
-<!-- ===== КАЛЬКУЛЯТОРЫ ===== -->
 <section class="calc-section" id="calculators">
   <h2>Калькуляторы</h2>
   <div class="calc-tabs" role="tablist">
@@ -336,8 +210,6 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
     <button data-calc="amount" role="tab">Количество вещества</button>
     <button data-calc="particles" role="tab">Число частиц</button>
   </div>
-
-  <!-- Молярная масса -->
   <div class="calc-panel" id="calc-molarMass">
     <label for="formulaInput">Химическая формула</label>
     <p class="hint">Например: Ca(OH)2, Fe2O3, H2SO4, Al2(SO4)3, KMnO4</p>
@@ -345,8 +217,6 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
     <button onclick="calculateMolarMass()">Рассчитать</button>
     <div class="calc-result" id="resultMolarMass"></div>
   </div>
-
-  <!-- Массовая доля -->
   <div class="calc-panel" id="calc-massFraction" hidden>
     <label for="mfFormula">Формула вещества</label>
     <p class="hint">Например: H2O, CO2, NaCl</p>
@@ -357,8 +227,6 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
     <button onclick="calculateMassFraction()">Рассчитать</button>
     <div class="calc-result" id="resultMassFraction"></div>
   </div>
-
-  <!-- Количество вещества -->
   <div class="calc-panel" id="calc-amount" hidden>
     <label for="amountMode">Что известно?</label>
     <select id="amountMode" onchange="toggleAmountFields()">
@@ -375,14 +243,12 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
     </div>
     <div id="amountVolumeFields" hidden>
       <label for="amountV">Объём газа V, л (при н.у.)</label>
-      <p class="hint">При нормальных условиях 1 моль любого газа занимает 22,4 л</p>
+      <p class="hint">При н.у. 1 моль любого газа занимает 22,4 л</p>
       <input type="number" id="amountV" placeholder="44.8" step="any">
     </div>
     <button onclick="calculateAmount()">Рассчитать</button>
     <div class="calc-result" id="resultAmount"></div>
   </div>
-
-  <!-- Число частиц -->
   <div class="calc-panel" id="calc-particles" hidden>
     <label for="particlesN">Количество вещества n, моль</label>
     <p class="hint">Например: 2 моль</p>
@@ -392,52 +258,69 @@ td.type-noble { background: var(--noble); color: #1a1a1a; }
   </div>
 </section>
 
-<!-- ===== ТРЕНАЖЁР ===== -->
+<section class="formulas-section" id="formulas">
+  <h2>Формулы для 7–9 классов</h2>
+  <p class="section-intro">Шпаргалка по химии и физике. Содержание может немного отличаться в зависимости от школьной программы.</p>
+  <div class="subject-tabs" role="tablist">
+    <button class="active" data-subject="chem" onclick="switchSubject('chem')">Химия</button>
+    <button data-subject="phys" onclick="switchSubject('phys')">Физика</button>
+  </div>
+  <div class="formulas-controls">
+    <input type="search" id="formulaSearch" placeholder="Поиск по формулам и темам…" aria-label="Поиск по формулам">
+    <select id="formulaTopicFilter" aria-label="Фильтр по теме"><option value="">Все темы</option></select>
+    <select id="formulaGradeFilter" aria-label="Фильтр по классу">
+      <option value="">Все классы</option>
+      <option value="7">7 класс</option>
+      <option value="8">8 класс</option>
+      <option value="9">9 класс</option>
+    </select>
+    <label><input type="checkbox" id="formulaFavOnly"> Только избранное</label>
+  </div>
+  <div class="formulas-grid" id="formulasGrid"></div>
+  <p class="empty-message" id="formulasEmpty" hidden>Ничего не найдено. Попробуйте другой запрос.</p>
+</section>
+
 <section class="trainer-section" id="trainer">
   <h2>Тренажёр</h2>
   <div class="trainer-card">
+    <div class="trainer-controls">
+      <label>Сложность:
+        <select id="trainerDifficulty" onchange="newTask()">
+          <option value="easy">Лёгкий</option>
+          <option value="medium" selected>Средний</option>
+          <option value="hard">Сложный</option>
+          <option value="all">Смешанный</option>
+        </select>
+      </label>
+      <span class="trainer-stats" id="trainerStats">Верно: 0 / 0</span>
+      <button onclick="resetTrainerStats()" title="Сбросить счётчик">Сброс</button>
+    </div>
     <div class="task-text" id="taskText">Нажмите «Новая задача»</div>
     <div>
-      <input type="text" id="taskAnswer" placeholder="Ваш ответ" autocomplete="off">
+      <input type="text" id="taskAnswer" placeholder="Ваш ответ" autocomplete="off" onkeydown="if(event.key==='Enter'){checkAnswer();}">
       <button class="btn-check" onclick="checkAnswer()">Проверить</button>
       <button class="btn-solution" onclick="showSolution()">Показать решение</button>
-      <button class="btn-check" onclick="newTask()" style="background:var(--text-secondary)">Новая задача</button>
+      <button class="btn-check" onclick="newTask()" style="background:var(--text2)">Новая задача</button>
     </div>
     <div class="trainer-feedback" id="trainerFeedback" hidden></div>
     <div class="trainer-solution" id="trainerSolution" hidden></div>
   </div>
 </section>
 
-<!-- ===== КАК ЧИТАТЬ ТАБЛИЦУ ===== -->
 <section class="guide-section" id="guide">
   <h2>Как читать таблицу</h2>
-  <p><strong>Порядковый номер (Z)</strong> — это заряд ядра атома. Он же равен числу протонов и числу электронов в нейтральном атоме. Например, у натрия Z = 11: в ядре 11 протонов, вокруг ядра 11 электронов.</p>
-  <p><strong>Период</strong> — горизонтальный ряд. Номер периода показывает, сколько электронных слоёв (энергетических уровней) у атома. У элементов 1-го периода один слой, у 2-го — два и т.д.</p>
-  <p><strong>Группа</strong> — вертикальный столбец. Номер группы (для главных подгрупп) часто совпадает с числом электронов на внешнем слое и с высшей валентностью. Например, элементы IA группы (Li, Na, K) имеют 1 внешний электрон и валентность I.</p>
-  <p><strong>Главная (A) и побочная (B) подгруппы.</strong> В длиннопериодной форме главные подгруппы — это крайние столбцы (IA, IIA, IIIA…VIIIA), побочные — вставленные декады (IIIB…VIIIB, IB, IIB). У элементов главных подгрупп внешние электроны находятся на s- и p-орбиталях, у побочных — на d-орбиталях предвнешнего слоя.</p>
-  <p><strong>Металлы и неметаллы.</strong> Металлы занимают левую и нижнюю часть таблицы (примерно 80% элементов), неметаллы — правый верхний угол. Амфотерные элементы (Al, Zn, Be, Cr и др.) проявляют свойства и металлов, и неметаллов. Благородные газы — элементы VIIIA группы, они почти не вступают в реакции.</p>
-  <p><strong>Как это помогает в задачах.</strong> Зная Z, можно найти число протонов, электронов и нейтронов (нейтроны ≈ Ar − Z). По номеру периода определяют число слоёв, по номеру группы — число внешних электронов и высшую валентность. Это основа для составления электронных схем и формул соединений.</p>
+  <p><strong>Порядковый номер (Z)</strong> — заряд ядра, число протонов и электронов.</p>
+  <p><strong>Период</strong> — горизонтальный ряд, число электронных слоёв.</p>
+  <p><strong>Группа</strong> — вертикальный столбец, часто совпадает с высшей валентностью (для главных подгрупп).</p>
+  <p><strong>Подгруппы A и B.</strong> Главные (A) — крайние столбцы, побочные (B) — вставные декады.</p>
+  <p><strong>Металлы и неметаллы.</strong> Металлы — слева и снизу, неметаллы — справа сверху. Амфотерные (Al, Zn, Be, Cr) — посередине.</p>
+  <p><strong>Помощь в задачах.</strong> По Z найдите протоны, электроны, нейтроны (Ar − Z), по периоду — число слоёв, по группе — внешние электроны.</p>
 </section>
 
 <script>
-/* ================================================================
-   ДАННЫЕ ЭЛЕМЕНТОВ
-   Структура: массив объектов, индекс = Z-1.
-   Для компактности физические константы даны в виде строк.
-   «нет достоверных данных» — для элементов без устойчивых значений.
-   ================================================================ */
-
-// Вспомогательная функция для определения подгруппы по группе и периоду
-function subgroupOf(group, period) {
-  // Главные подгруппы: 1,2,13-18; побочные: 3-12
-  if (group <= 2 || group >= 13) return "A";
-  return "B";
-}
-
-// Базовый массив: [Z, символ, русское название, латинское название, Ar,
-// период, группа, тип, школьный?, валентности, степени окисления]
-// Тип: M=metal, N=nonmetal, A=amphoteric, G=noble
-const raw = [
+/* ============ ДАННЫЕ ЭЛЕМЕНТОВ ============ */
+function subgroupOf(g){return(g<=2||g>=13)?"A":"B";}
+const raw=[
 [1,"H","Водород","Hydrogenium",1.008,1,1,"N",true,[1],["+1","-1"]],
 [2,"He","Гелий","Helium",4.003,1,18,"G",false,[0],["0"]],
 [3,"Li","Литий","Lithium",6.94,2,1,"M",true,[1],["+1"]],
@@ -558,571 +441,550 @@ const raw = [
 [118,"Og","Оганесон","Oganesson",294,7,18,"G",false,[0],["0"]]
 ];
 
-// Преобразование в полные объекты
-const elements = raw.map(([z,sym,nameRu,nameLat,ar,period,group,type,isSchool,valences,oxidationStates]) => {
-  const subgroup = subgroupOf(group, period);
-  const neutrons = Math.round(ar) - z;
-
-  // Распределение электронов по уровням (упрощённо, по правилу 2n², но с реальными данными для первых 20)
-  const shellsMap = {
-    1:[1],2:[2],3:[2,1],4:[2,2],5:[2,3],6:[2,4],7:[2,5],8:[2,6],9:[2,7],10:[2,8],
-    11:[2,8,1],12:[2,8,2],13:[2,8,3],14:[2,8,4],15:[2,8,5],16:[2,8,6],17:[2,8,7],18:[2,8,8],
-    19:[2,8,8,1],20:[2,8,8,2],21:[2,8,9,2],22:[2,8,10,2],23:[2,8,11,2],24:[2,8,13,1],
-    25:[2,8,13,2],26:[2,8,14,2],27:[2,8,15,2],28:[2,8,16,2],29:[2,8,18,1],30:[2,8,18,2],
-    31:[2,8,18,3],32:[2,8,18,4],33:[2,8,18,5],34:[2,8,18,6],35:[2,8,18,7],36:[2,8,18,8]
-  };
-  let shells;
-  if (shellsMap[z]) shells = shellsMap[z];
-  else if (z <= 54) shells = [2,8,18,Math.min(18, z-36)]; // упрощённо для 37–54
-  else if (z <= 86) shells = [2,8,18,32,Math.min(18, z-54)]; // упрощённо для 55–86
-  else shells = [2,8,18,32,Math.min(32, z-86)]; // упрощённо для 87–118
-
-  // Электронная формула (для школьных элементов — упрощённо)
-  const formulaMap = {
-    1:"1s¹",2:"1s²",3:"1s²2s¹",4:"1s²2s²",5:"1s²2s²2p¹",6:"1s²2s²2p²",
-    7:"1s²2s²2p³",8:"1s²2s²2p⁴",9:"1s²2s²2p⁵",10:"1s²2s²2p⁶",
-    11:"1s²2s²2p⁶3s¹",12:"1s²2s²2p⁶3s²",13:"1s²2s²2p⁶3s²3p¹",
-    14:"1s²2s²2p⁶3s²3p²",15:"1s²2s²2p⁶3s²3p³",16:"1s²2s²2p⁶3s²3p⁴",
-    17:"1s²2s²2p⁶3s²3p⁵",18:"1s²2s²2p⁶3s²3p⁶",
-    19:"1s²2s²2p⁶3s²3p⁶4s¹",20:"1s²2s²2p⁶3s²3p⁶4s²",
-    26:"1s²2s²2p⁶3s²3p⁶4s²3d⁶",29:"1s²2s²2p⁶3s²3p⁶4s¹3d¹⁰",
-    30:"1s²2s²2p⁶3s²3p⁶4s²3d¹⁰"
-  };
-  const electronFormula = formulaMap[z] || "полная формула в школьном курсе не изучается";
-
-  // Характер оксида и гидроксида (упрощённо по положению)
-  let oxideCharacter, hydroxideCharacter;
-  if (type === "M" || type === "A") {
-    if (group <= 2) { oxideCharacter = "основный"; hydroxideCharacter = "основание"; }
-    else if (type === "A" && (group === 13 || group >= 3 && group <= 12)) { oxideCharacter = "амфотерный"; hydroxideCharacter = "амфотерный гидроксид"; }
-    else { oxideCharacter = "основный"; hydroxideCharacter = "основание"; }
-  } else if (type === "N") {
-    if (group >= 14) { oxideCharacter = "кислотный"; hydroxideCharacter = "кислота"; }
-    else { oxideCharacter = "несолеобразующий"; hydroxideCharacter = "—"; }
-  } else { oxideCharacter = "—"; hydroxideCharacter = "—"; }
-
-  // Формулы оксида и гидроксида (упрощённо, для основных элементов)
-  const oxideFormulaMap = {
-    1:"H₂O",3:"Li₂O",4:"BeO",5:"B₂O₃",6:"CO₂",7:"N₂O₅",8:"—",9:"—",
-    11:"Na₂O",12:"MgO",13:"Al₂O₃",14:"SiO₂",15:"P₂O₅",16:"SO₃",17:"Cl₂O₇",
-    19:"K₂O",20:"CaO",26:"Fe₂O₃",29:"CuO",30:"ZnO"
-  };
-  const oxideFormula = oxideFormulaMap[z] || "—";
-  const hydroxideFormulaMap = {
-    3:"LiOH",4:"Be(OH)₂",11:"NaOH",12:"Mg(OH)₂",13:"Al(OH)₃",
-    14:"H₂SiO₃",15:"H₃PO₄",16:"H₂SO₄",17:"HClO₄",
-    19:"KOH",20:"Ca(OH)₂",26:"Fe(OH)₃",29:"Cu(OH)₂",30:"Zn(OH)₂"
-  };
-  const hydroxideFormula = hydroxideFormulaMap[z] || "—";
-  const acidFormula = (type === "N" && group >= 14) ? (hydroxideFormula.includes("H") ? hydroxideFormula : "—") : "—";
-  const baseFormula = (type === "M" && group <= 2) ? hydroxideFormula : "—";
-
-  // Простое вещество
-  const simpleFormulaMap = {
-    1:"H₂",2:"He",3:"Li",4:"Be",5:"B",6:"C",7:"N₂",8:"O₂",9:"F₂",10:"Ne",
-    11:"Na",12:"Mg",13:"Al",14:"Si",15:"P",16:"S",17:"Cl₂",18:"Ar",
-    19:"K",20:"Ca",26:"Fe",29:"Cu",30:"Zn",35:"Br₂",47:"Ag",53:"I₂",79:"Au",80:"Hg",82:"Pb"
-  };
-  const simpleFormula = simpleFormulaMap[z] || sym;
-
-  // Агрегатное состояние (по температуре плавления/кипения, упрощённо)
-  const gasZ = [1,2,7,8,9,10,17,18,36,54,86,118];
-  const liquidZ = [35,80];
-  const aggregate = gasZ.includes(z) ? "газ" : liquidZ.includes(z) ? "жидкость" : "твёрдое";
-
-  // Температуры и плотность (из справочников, для ключевых элементов)
-  const mpMap = {1:"−259 °C",2:"−272 °C",3:"180,5 °C",4:"1287 °C",5:"2075 °C",6:"≈3550 °C",7:"−210 °C",8:"−219 °C",9:"−220 °C",10:"−249 °C",11:"97,8 °C",12:"650 °C",13:"660 °C",14:"1414 °C",15:"44 °C (белый)",16:"115 °C",17:"−101 °C",18:"−189 °C",19:"63,5 °C",20:"842 °C",26:"1538 °C",29:"1085 °C",30:"420 °C",35:"−7,2 °C",47:"962 °C",53:"114 °C",79:"1064 °C",80:"−39 °C",82:"327 °C"};
-  const bpMap = {1:"−253 °C",2:"−269 °C",3:"1342 °C",4:"2471 °C",5:"4000 °C",6:"4827 °C",7:"−196 °C",8:"−183 °C",9:"−188 °C",10:"−246 °C",11:"883 °C",12:"1090 °C",13:"2519 °C",14:"3265 °C",15:"280 °C (белый)",16:"445 °C",17:"−34 °C",18:"−186 °C",19:"774 °C",20:"1484 °C",26:"2862 °C",29:"2562 °C",30:"907 °C",35:"58,8 °C",47:"2162 °C",53:"184 °C",79:"2856 °C",80:"357 °C",82:"1749 °C"};
-  const densityMap = {1:"0,00009 г/см³",2:"0,00018 г/см³",3:"0,53 г/см³",4:"1,85 г/см³",5:"2,34 г/см³",6:"2,2 г/см³",7:"0,00125 г/см³",8:"0,00143 г/см³",9:"0,0017 г/см³",10:"0,0009 г/см³",11:"0,97 г/см³",12:"1,74 г/см³",13:"2,70 г/см³",14:"2,33 г/см³",15:"1,82 г/см³",16:"2,07 г/см³",17:"0,0032 г/см³",18:"0,0018 г/см³",19:"0,86 г/см³",20:"1,55 г/см³",26:"7,87 г/см³",29:"8,96 г/см³",30:"7,13 г/см³",35:"3,12 г/см³",47:"10,5 г/см³",53:"4,93 г/см³",79:"19,3 г/см³",80:"13,5 г/см³",82:"11,3 г/см³"};
-
-  const meltingPoint = mpMap[z] || "нет достоверных данных";
-  const boilingPoint = bpMap[z] || "нет достоверных данных";
-  const density = densityMap[z] || "нет достоверных данных";
-
-  // Цвет (приблизительно)
-  const colorMap = {1:"бесцветный",2:"бесцветный",3:"серебристо-белый",4:"серый",5:"чёрный",6:"чёрный (графит) / прозрачный (алмаз)",7:"бесцветный",8:"бесцветный",9:"бледно-жёлтый",10:"бесцветный",11:"серебристо-белый",12:"серебристо-белый",13:"серебристо-белый",14:"серый",15:"белый/красный",16:"жёлтый",17:"жёлто-зелёный",18:"бесцветный",19:"серебристо-белый",20:"серебристо-белый",26:"серебристо-белый",29:"красноватый",30:"синевато-белый",35:"красно-бурый",47:"серебристо-белый",53:"тёмно-фиолетовый",79:"жёлтый",80:"серебристо-белый",82:"синевато-серый"};
-  const color = colorMap[z] || "нет достоверных данных";
-
-  return {
-    z, symbol: sym, nameRu, nameLat, ar, period, group, subgroup, type,
-    isSchool,
-    protons: z, neutrons, electrons: z, nucleusCharge: "+" + z,
-    shells, electronFormula,
-    valences, oxidationStates,
-    simpleFormula, aggregate, color, density, meltingPoint, boilingPoint,
-    oxideFormula, oxideCharacter, hydroxideFormula, hydroxideCharacter,
-    acidFormula, baseFormula,
-    facts: getFacts(z, nameRu, type),
-    tasks: getTasks(z, sym, nameRu, ar, type)
-  };
+const elements=raw.map(([z,sym,nameRu,nameLat,ar,period,group,type,isSchool,valences,oxidationStates])=>{
+const subgroup=subgroupOf(group);
+const neutrons=Math.round(ar)-z;
+const shellsMap={1:[1],2:[2],3:[2,1],4:[2,2],5:[2,3],6:[2,4],7:[2,5],8:[2,6],9:[2,7],10:[2,8],11:[2,8,1],12:[2,8,2],13:[2,8,3],14:[2,8,4],15:[2,8,5],16:[2,8,6],17:[2,8,7],18:[2,8,8],19:[2,8,8,1],20:[2,8,8,2],21:[2,8,9,2],22:[2,8,10,2],23:[2,8,11,2],24:[2,8,13,1],25:[2,8,13,2],26:[2,8,14,2],27:[2,8,15,2],28:[2,8,16,2],29:[2,8,18,1],30:[2,8,18,2],31:[2,8,18,3],32:[2,8,18,4],33:[2,8,18,5],34:[2,8,18,6],35:[2,8,18,7],36:[2,8,18,8]};
+let shells;
+if(shellsMap[z])shells=shellsMap[z];
+else if(z<=54)shells=[2,8,18,Math.min(18,z-36)];
+else if(z<=86)shells=[2,8,18,32,Math.min(18,z-54)];
+else shells=[2,8,18,32,Math.min(32,z-86)];
+const formulaMap={1:"1s¹",2:"1s²",3:"1s²2s¹",4:"1s²2s²",5:"1s²2s²2p¹",6:"1s²2s²2p²",7:"1s²2s²2p³",8:"1s²2s²2p⁴",9:"1s²2s²2p⁵",10:"1s²2s²2p⁶",11:"1s²2s²2p⁶3s¹",12:"1s²2s²2p⁶3s²",13:"1s²2s²2p⁶3s²3p¹",14:"1s²2s²2p⁶3s²3p²",15:"1s²2s²2p⁶3s²3p³",16:"1s²2s²2p⁶3s²3p⁴",17:"1s²2s²2p⁶3s²3p⁵",18:"1s²2s²2p⁶3s²3p⁶",19:"1s²2s²2p⁶3s²3p⁶4s¹",20:"1s²2s²2p⁶3s²3p⁶4s²",26:"1s²2s²2p⁶3s²3p⁶4s²3d⁶",29:"1s²2s²2p⁶3s²3p⁶4s¹3d¹⁰",30:"1s²2s²2p⁶3s²3p⁶4s²3d¹⁰"};
+const electronFormula=formulaMap[z]||"полная формула в школьном курсе не изучается";
+let oc,hc;
+if(type==="M"||type==="A"){
+if(group<=2){oc="основный";hc="основание";}
+else if(type==="A"&&(group===13||(group>=3&&group<=12))){oc="амфотерный";hc="амфотерный гидроксид";}
+else{oc="основный";hc="основание";}
+}else if(type==="N"){
+if(group>=14){oc="кислотный";hc="кислота";}
+else{oc="несолеобразующий";hc="—";}
+}else{oc="—";hc="—";}
+const ofm={1:"H₂O",3:"Li₂O",4:"BeO",5:"B₂O₃",6:"CO₂",7:"N₂O₅",11:"Na₂O",12:"MgO",13:"Al₂O₃",14:"SiO₂",15:"P₂O₅",16:"SO₃",17:"Cl₂O₇",19:"K₂O",20:"CaO",26:"Fe₂O₃",29:"CuO",30:"ZnO"};
+const hfm={3:"LiOH",4:"Be(OH)₂",11:"NaOH",12:"Mg(OH)₂",13:"Al(OH)₃",14:"H₂SiO₃",15:"H₃PO₄",16:"H₂SO₄",17:"HClO₄",19:"KOH",20:"Ca(OH)₂",26:"Fe(OH)₃",29:"Cu(OH)₂",30:"Zn(OH)₂"};
+const sfm={1:"H₂",2:"He",3:"Li",4:"Be",5:"B",6:"C",7:"N₂",8:"O₂",9:"F₂",10:"Ne",11:"Na",12:"Mg",13:"Al",14:"Si",15:"P",16:"S",17:"Cl₂",18:"Ar",19:"K",20:"Ca",26:"Fe",29:"Cu",30:"Zn",35:"Br₂",47:"Ag",53:"I₂",79:"Au",80:"Hg",82:"Pb"};
+const gasZ=[1,2,7,8,9,10,17,18,36,54,86,118];
+const liquidZ=[35,80];
+const mpMap={1:"−259 °C",2:"−272 °C",3:"180,5 °C",4:"1287 °C",5:"2075 °C",6:"≈3550 °C",7:"−210 °C",8:"−219 °C",9:"−220 °C",10:"−249 °C",11:"97,8 °C",12:"650 °C",13:"660 °C",14:"1414 °C",15:"44 °C (белый)",16:"115 °C",17:"−101 °C",18:"−189 °C",19:"63,5 °C",20:"842 °C",26:"1538 °C",29:"1085 °C",30:"420 °C",35:"−7,2 °C",47:"962 °C",53:"114 °C",79:"1064 °C",80:"−39 °C",82:"327 °C"};
+const bpMap={1:"−253 °C",2:"−269 °C",3:"1342 °C",4:"2471 °C",5:"4000 °C",6:"4827 °C",7:"−196 °C",8:"−183 °C",9:"−188 °C",10:"−246 °C",11:"883 °C",12:"1090 °C",13:"2519 °C",14:"3265 °C",15:"280 °C (белый)",16:"445 °C",17:"−34 °C",18:"−186 °C",19:"774 °C",20:"1484 °C",26:"2862 °C",29:"2562 °C",30:"907 °C",35:"58,8 °C",47:"2162 °C",53:"184 °C",79:"2856 °C",80:"357 °C",82:"1749 °C"};
+const dMap={1:"0,00009 г/см³",2:"0,00018 г/см³",3:"0,53 г/см³",4:"1,85 г/см³",5:"2,34 г/см³",6:"2,2 г/см³",7:"0,00125 г/см³",8:"0,00143 г/см³",9:"0,0017 г/см³",10:"0,0009 г/см³",11:"0,97 г/см³",12:"1,74 г/см³",13:"2,70 г/см³",14:"2,33 г/см³",15:"1,82 г/см³",16:"2,07 г/см³",17:"0,0032 г/см³",18:"0,0018 г/см³",19:"0,86 г/см³",20:"1,55 г/см³",26:"7,87 г/см³",29:"8,96 г/см³",30:"7,13 г/см³",35:"3,12 г/см³",47:"10,5 г/см³",53:"4,93 г/см³",79:"19,3 г/см³",80:"13,5 г/см³",82:"11,3 г/см³"};
+const cMap={1:"бесцветный",2:"бесцветный",3:"серебристо-белый",4:"серый",5:"чёрный",6:"чёрный (графит) / прозрачный (алмаз)",7:"бесцветный",8:"бесцветный",9:"бледно-жёлтый",10:"бесцветный",11:"серебристо-белый",12:"серебристо-белый",13:"серебристо-белый",14:"серый",15:"белый/красный",16:"жёлтый",17:"жёлто-зелёный",18:"бесцветный",19:"серебристо-белый",20:"серебристо-белый",26:"серебристо-белый",29:"красноватый",30:"синевато-белый",35:"красно-бурый",47:"серебристо-белый",53:"тёмно-фиолетовый",79:"жёлтый",80:"серебристо-белый",82:"синевато-серый"};
+return{
+z,symbol:sym,nameRu,nameLat,ar,period,group,subgroup,type,isSchool,
+protons:z,neutrons,electrons:z,nucleusCharge:"+"+z,
+shells,electronFormula,valences,oxidationStates,
+simpleFormula:sfm[z]||sym,aggregate:gasZ.includes(z)?"газ":liquidZ.includes(z)?"жидкость":"твёрдое",
+color:cMap[z]||"нет достоверных данных",density:dMap[z]||"нет достоверных данных",
+meltingPoint:mpMap[z]||"нет достоверных данных",boilingPoint:bpMap[z]||"нет достоверных данных",
+oxideFormula:ofm[z]||"—",oxideCharacter:oc,
+hydroxideFormula:hfm[z]||"—",hydroxideCharacter:hc,
+acidFormula:(type==="N"&&group>=14&&hfm[z]&&hfm[z].includes("H"))?hfm[z]:"—",
+baseFormula:(type==="M"&&group<=2)?(hfm[z]||"—"):"—",
+facts:getFacts(z,nameRu),
+tasks:getTasks(z,sym,ar)
+};
 });
 
-// Факты (2–3 на элемент, с бытовым/практическим уклоном)
-function getFacts(z, name, type) {
-  const common = {
-    1:["Самый распространённый элемент во Вселенной.","Входит в состав воды и почти всех органических веществ.","Используется как восстановитель в металлургии и как топливо."],
-    2:["Второй по распространённости элемент во Вселенной.","Используется для наполнения воздушных шаров и охлаждения в криогенной технике.","Не вступает в химические реакции при обычных условиях."],
-    3:["Самый лёгкий металл.","Применяется в аккумуляторах (литий-ионные батареи).","Хранят в вазелине, так как реагирует с водой."],
-    6:["Основа всей органической жизни.","Алмаз и графит — аллотропные модификации углерода.","Входит в состав углекислого газа и углеводов."],
-    7:["Газ, составляющий около 78% воздуха.","Входит в состав белков и нуклеиновых кислот.","Используется для создания инертной атмосферы в промышленности."],
-    8:["Самый распространённый элемент в земной коре.","Необходим для дыхания и горения.","Входит в состав воды и многих минералов."],
-    11:["Металл, который бурно реагирует с водой.","Входит в состав поваренной соли NaCl.","Используется в уличных лампах (жёлтое свечение)."],
-    12:["Лёгкий металл, входит в состав сплавов.","Горит ослепительно белым пламенем.","Входит в состав хлорофилла у растений."],
-    13:["Самый распространённый металл в земной коре.","Используется в самолётостроении и посуде.","Образует защитную оксидную плёнку."],
-    14:["Второй по распространённости элемент в земной коре.","Основа полупроводниковой электроники.","Входит в состав песка и глины."],
-    15:["Входит в состав костей и зубов.","Белый фосфор светится в темноте.","Используется в спичках и удобрениях."],
-    16:["Входит в состав вулканических газов и сульфатов.","Используется для производства серной кислоты.","Встречается в самородном виде."],
-    17:["Газ жёлто-зелёного цвета с резким запахом.","Используется для обеззараживания воды.","Входит в состав поваренной соли."],
-    19:["Входит в состав удобрений.","Ионы калия важны для работы сердца.","Бурно реагирует с водой."],
-    20:["Входит в состав костей и зубов.","Соединения кальция используются в строительстве (известь, цемент).","Встречается в виде мела и мрамора."],
-    26:["Самый используемый металл в мире.","Входит в состав стали и чугуна.","В организме человека входит в состав гемоглобина."],
-    29:["Хорошо проводит электричество.","Используется в проводах и электронике.","Образует патину зелёного цвета."],
-    30:["Используется для защиты железа от коррозии (оцинковка).","Входит в состав латуни.","Необходим для нормального роста растений."],
-    47:["Самый блестящий металл.","Используется в зеркалах и ювелирных изделиях.","Обладает лучшей электропроводностью среди металлов."],
-    79:["Благородный металл жёлтого цвета.","Используется в ювелирных изделиях и электронике.","Не окисляется на воздухе."],
-    80:["Единственный металл, жидкий при обычных условиях.","Используется в термометрах и лампах.","Пары ртути ядовиты."]
-  };
-  return common[z] || [
-    `Элемент ${name} входит в периодическую систему.`,
-    `Используется в научных исследованиях и промышленности.`,
-    `Соединения ${name} встречаются в природе.`
-  ];
+function getFacts(z,name){
+const c={
+1:["Самый распространённый элемент во Вселенной.","Входит в состав воды и почти всех органических веществ.","Используется как восстановитель в металлургии и как топливо."],
+2:["Второй по распространённости элемент во Вселенной.","Используется для воздушных шаров и в криогенной технике.","Не вступает в реакции при обычных условиях."],
+3:["Самый лёгкий металл.","Применяется в литий-ионных аккумуляторах.","Хранят в вазелине, так как реагирует с водой."],
+6:["Основа всей органической жизни.","Алмаз и графит — аллотропные модификации.","Входит в состав CO₂ и углеводов."],
+7:["Газ, составляющий около 78% воздуха.","Входит в состав белков и нуклеиновых кислот.","Используется для инертной атмосферы в промышленности."],
+8:["Самый распространённый элемент в земной коре.","Необходим для дыхания и горения.","Входит в состав воды и многих минералов."],
+11:["Металл, который бурно реагирует с водой.","Входит в состав поваренной соли NaCl.","Используется в уличных лампах (жёлтое свечение)."],
+12:["Лёгкий металл, входит в состав сплавов.","Горит ослепительно белым пламенем.","Входит в состав хлорофилла у растений."],
+13:["Самый распространённый металл в земной коре.","Используется в самолётостроении и посуде.","Образует защитную оксидную плёнку."],
+14:["Второй по распространённости в земной коре.","Основа полупроводниковой электроники.","Входит в состав песка и глины."],
+15:["Входит в состав костей и зубов.","Белый фосфор светится в темноте.","Используется в спичках и удобрениях."],
+16:["Входит в состав вулканических газов.","Используется для производства серной кислоты.","Встречается в самородном виде."],
+17:["Газ жёлто-зелёного цвета с резким запахом.","Используется для обеззараживания воды.","Входит в состав поваренной соли."],
+19:["Входит в состав удобрений.","Ионы калия важны для работы сердца.","Бурно реагирует с водой."],
+20:["Входит в состав костей и зубов.","Соединения кальция — известь, цемент, мел, мрамор.","Важен для растений."],
+26:["Самый используемый металл в мире.","Входит в состав стали и чугуна.","В организме входит в состав гемоглобина."],
+29:["Хорошо проводит электричество.","Используется в проводах и электронике.","Образует зелёную патину."],
+30:["Используется для оцинковки железа.","Входит в состав латуни.","Необходим для роста растений."],
+47:["Самый блестящий металл.","Используется в зеркалах и украшениях.","Лучшая электропроводность среди металлов."],
+79:["Благородный металл жёлтого цвета.","Применяется в ювелирных изделиях и электронике.","Не окисляется на воздухе."],
+80:["Единственный металл, жидкий при обычных условиях.","Используется в термометрах и лампах.","Пары ядовиты."]};
+return c[z]||[`Элемент ${name} входит в периодическую систему.`,`Используется в науке и промышленности.`,`Соединения ${name} встречаются в природе.`];
 }
 
-// Типовые задачи (1–2 на элемент)
-function getTasks(z, sym, name, ar, type) {
-  if (z === 8) return [{condition:"Вычислите молярную массу воды H₂O.", solution:"M(H₂O) = 2·1 + 16 = 18 г/моль."}];
-  if (z === 20) return [{condition:"Вычислите массовую долю кальция в CaO.", solution:"M(CaO) = 40 + 16 = 56 г/моль. ω(Ca) = 40/56 ≈ 0,714 = 71,4%."}];
-  if (z === 26) return [{condition:"Вычислите массовую долю железа в Fe₂O₃.", solution:"M(Fe₂O₃) = 2·56 + 3·16 = 160 г/моль. ω(Fe) = 112/160 = 0,7 = 70%."}];
-  return [{condition:`Вычислите молярную массу простого вещества ${sym} (Ar = ${ar}).`, solution:`M(${sym}) = ${ar} г/моль.`}];
+function getTasks(z,sym,ar){
+if(z===8)return[{condition:"Вычислите молярную массу воды H₂O.",solution:"M(H₂O) = 2·1 + 16 = 18 г/моль."}];
+if(z===20)return[{condition:"Вычислите массовую долю кальция в CaO.",solution:"M(CaO) = 40 + 16 = 56 г/моль. ω(Ca) = 40/56 ≈ 0,714 = 71,4%."}];
+if(z===26)return[{condition:"Вычислите массовую долю железа в Fe₂O₃.",solution:"M(Fe₂O₃) = 2·56 + 3·16 = 160. ω(Fe) = 112/160 = 70%."}];
+return[{condition:`Вычислите молярную массу простого вещества ${sym} (Ar = ${ar}).`,solution:`M(${sym}) = ${ar} г/моль.`}];
 }
 
-/* ================================================================
-   ПОСТРОЕНИЕ ТАБЛИЦЫ
-   ================================================================ */
-const tableHead = document.getElementById("tableHead");
-const tableBody = document.getElementById("tableBody");
+/* ============ ТАБЛИЦА ============ */
+const tableHead=document.getElementById("tableHead");
+const tableBody=document.getElementById("tableBody");
+let hr="<tr><th></th>";
+for(let g=1;g<=18;g++)hr+=`<th>${g}</th>`;
+hr+="</tr>";
+tableHead.innerHTML=hr;
 
-// Заголовки групп
-let headRow = "<tr><th></th>";
-for (let g = 1; g <= 18; g++) headRow += `<th>${g}</th>`;
-headRow += "</tr>";
-tableHead.innerHTML = headRow;
-
-// Тело таблицы: 7 периодов, лантаноиды и актиноиды отдельными рядами
-function renderTable(filterFn) {
-  tableBody.innerHTML = "";
-  const displayElements = filterFn ? elements.filter(filterFn) : elements;
-
-  // Для каждого периода — строка
-  for (let p = 1; p <= 7; p++) {
-    let row = `<tr><th>${p}</th>`;
-    for (let g = 1; g <= 18; g++) {
-      // Ищем элемент с таким периодом и группой
-      const el = displayElements.find(e => e.period === p && e.group === g && !(e.z >= 57 && e.z <= 71) && !(e.z >= 89 && e.z <= 103));
-      row += el ? cellHTML(el) : "<td></td>";
-    }
-    row += "</tr>";
-    tableBody.innerHTML += row;
-  }
-
-  // Лантаноиды (57–71) и актиноиды (89–103) — отдельные ряды
-  const lanthanides = displayElements.filter(e => e.z >= 57 && e.z <= 71);
-  const actinides = displayElements.filter(e => e.z >= 89 && e.z <= 103);
-  if (lanthanides.length || actinides.length) {
-    tableBody.innerHTML += `<tr><th colspan="18" style="text-align:left;font-size:11px;color:var(--text-secondary);padding-top:8px;">Лантаноиды</th></tr>`;
-    tableBody.innerHTML += `<tr><th></th>${lanthanides.map(el => cellHTML(el)).join("")}${Array(18 - lanthanides.length).fill("<td></td>").join("")}</tr>`;
-    tableBody.innerHTML += `<tr><th colspan="18" style="text-align:left;font-size:11px;color:var(--text-secondary);padding-top:8px;">Актиноиды</th></tr>`;
-    tableBody.innerHTML += `<tr><th></th>${actinides.map(el => cellHTML(el)).join("")}${Array(18 - actinides.length).fill("<td></td>").join("")}</tr>`;
-  }
+function renderTable(filterFn){
+tableBody.innerHTML="";
+const d=filterFn?elements.filter(filterFn):elements;
+for(let p=1;p<=7;p++){
+let row=`<tr><th>${p}</th>`;
+for(let g=1;g<=18;g++){
+const el=d.find(e=>e.period===p&&e.group===g&&!(e.z>=57&&e.z<=71)&&!(e.z>=89&&e.z<=103));
+row+=el?cellHTML(el):"<td></td>";
+}
+row+="</tr>";
+tableBody.innerHTML+=row;
+}
+const lan=d.filter(e=>e.z>=57&&e.z<=71);
+const act=d.filter(e=>e.z>=89&&e.z<=103);
+if(lan.length||act.length){
+tableBody.innerHTML+=`<tr><th colspan="18" style="text-align:left;font-size:11px;color:var(--text2);padding-top:8px;">Лантаноиды</th></tr>`;
+tableBody.innerHTML+=`<tr><th></th>${lan.map(cellHTML).join("")}${Array(18-lan.length).fill("<td></td>").join("")}</tr>`;
+tableBody.innerHTML+=`<tr><th colspan="18" style="text-align:left;font-size:11px;color:var(--text2);padding-top:8px;">Актиноиды</th></tr>`;
+tableBody.innerHTML+=`<tr><th></th>${act.map(cellHTML).join("")}${Array(18-act.length).fill("<td></td>").join("")}</tr>`;
+}
 }
 
-function cellHTML(el) {
-  const typeClass = { M:"type-metal", N:"type-nonmetal", A:"type-amphoteric", G:"type-noble" }[el.type];
-  const schoolClass = el.isSchool ? "school-marker" : "";
-  return `<td class="${typeClass} ${schoolClass}" tabindex="0" data-z="${el.z}"
-    onclick="openCard(${el.z})" onkeydown="handleCellKey(event, ${el.z})"
-    aria-label="${el.nameRu}, порядковый номер ${el.z}">
-    <span class="z">${el.z}</span>
-    <span class="sym">${el.symbol}</span>
-    <span class="mass">${el.ar}</span>
-  </td>`;
+function cellHTML(el){
+const tc={M:"type-metal",N:"type-nonmetal",A:"type-amphoteric",G:"type-noble"}[el.type];
+const sc=el.isSchool?"school-marker":"";
+return `<td class="${tc} ${sc}" tabindex="0" data-z="${el.z}" onclick="openCard(${el.z})" onkeydown="handleCellKey(event,${el.z})" aria-label="${el.nameRu}, Z=${el.z}"><span class="z">${el.z}</span><span class="sym">${el.symbol}</span><span class="mass">${el.ar}</span></td>`;
 }
 
-// Навигация стрелками
-function handleCellKey(e, z) {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCard(z); return; }
-  const dirs = { ArrowRight:1, ArrowLeft:-1, ArrowDown:18, ArrowUp:-18 };
-  if (dirs[e.key]) {
-    e.preventDefault();
-    const next = elements[z - 1 + dirs[e.key]];
-    if (next) {
-      const cell = document.querySelector(`td[data-z="${next.z}"]`);
-      if (cell) cell.focus();
-    }
-  }
+function handleCellKey(e,z){
+if(e.key==="Enter"||e.key===" "){e.preventDefault();openCard(z);return;}
+const dirs={ArrowRight:1,ArrowLeft:-1,ArrowDown:18,ArrowUp:-18};
+if(dirs[e.key]){
+e.preventDefault();
+const n=elements[z-1+dirs[e.key]];
+if(n){const c=document.querySelector(`td[data-z="${n.z}"]`);if(c)c.focus();}
+}
 }
 
-/* ================================================================
-   ФИЛЬТРАЦИЯ И ПОИСК
-   ================================================================ */
-const searchInput = document.getElementById("searchInput");
-const filterPeriod = document.getElementById("filterPeriod");
-const filterGroup = document.getElementById("filterGroup");
-const filterType = document.getElementById("filterType");
-const schoolOnly = document.getElementById("schoolOnly");
+/* ============ ФИЛЬТРЫ ============ */
+const searchInput=document.getElementById("searchInput");
+const filterPeriod=document.getElementById("filterPeriod");
+const filterGroup=document.getElementById("filterGroup");
+const filterType=document.getElementById("filterType");
+const schoolOnly=document.getElementById("schoolOnly");
+for(let g=1;g<=18;g++)filterGroup.innerHTML+=`<option value="${g}">${g}</option>`;
+const typeMap={metal:"M",nonmetal:"N",amphoteric:"A",noble:"G"};
 
-// Заполнение выпадающего списка групп
-for (let g = 1; g <= 18; g++) {
-  filterGroup.innerHTML += `<option value="${g}">${g}</option>`;
+function applyFilters(){
+const q=searchInput.value.trim().toLowerCase();
+const p=filterPeriod.value,g=filterGroup.value,t=filterType.value,s=schoolOnly.checked;
+renderTable(el=>{
+if(q&&!(el.nameRu.toLowerCase().includes(q)||el.symbol.toLowerCase().includes(q)||String(el.z)===q||el.nameLat.toLowerCase().includes(q)))return false;
+if(p&&el.period!==+p)return false;
+if(g&&el.group!==+g)return false;
+if(t&&el.type!==typeMap[t])return false;
+if(s&&!el.isSchool)return false;
+return true;
+});
 }
-const typeMap = { metal: "M", nonmetal: "N", amphoteric: "A", noble: "G" };
-function applyFilters() {
-  const q = searchInput.value.trim().toLowerCase();
-  const p = filterPeriod.value;
-  const g = filterGroup.value;
-  const t = filterType.value;
-  const school = schoolOnly.checked;
+searchInput.addEventListener("input",applyFilters);
+filterPeriod.addEventListener("change",applyFilters);
+filterGroup.addEventListener("change",applyFilters);
+filterType.addEventListener("change",applyFilters);
+schoolOnly.addEventListener("change",applyFilters);
 
-  renderTable(el => {
-    if (q && !(el.nameRu.toLowerCase().includes(q) || el.symbol.toLowerCase().includes(q) || String(el.z) === q || el.nameLat.toLowerCase().includes(q))) return false;
-    if (p && el.period !== +p) return false;
-    if (g && el.group !== +g) return false;
-    if (t && el.type !== typeMap[t]) return false;
-    if (school && !el.isSchool) return false;
-    return true;
-  });
-}
-
-searchInput.addEventListener("input", applyFilters);
-filterPeriod.addEventListener("change", applyFilters);
-filterGroup.addEventListener("change", applyFilters);
-filterType.addEventListener("change", applyFilters);
-schoolOnly.addEventListener("change", applyFilters);
-
-/* ================================================================
-   КАРТОЧКА ЭЛЕМЕНТА
-   ================================================================ */
-let compareList = [];
-
-function openCard(z) {
-  const el = elements[z - 1];
-  if (!el) return;
-
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-
-  const typeLabel = { M:"металл", N:"неметалл", A:"амфотерный", G:"благородный газ" }[el.type];
-
-  overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" aria-label="Закрыть">×</button>
-      <h2 id="modalTitle">${el.nameRu} (${el.symbol})</h2>
-      <p class="subtitle">${el.nameLat} · Z = ${el.z} · Ar = ${el.ar}</p>
-
-      <div class="section">
-        <h3>Идентификация</h3>
-        <div class="field"><span class="label">Порядковый номер Z</span><span class="value">${el.z}</span></div>
-        <div class="field"><span class="label">Относительная атомная масса Ar</span><span class="value">${el.ar}</span></div>
-        <div class="field"><span class="label">Период</span><span class="value">${el.period}</span></div>
-        <div class="field"><span class="label">Группа</span><span class="value">${el.group}</span></div>
-        <div class="field"><span class="label">Подгруппа</span><span class="value">${el.subgroup === "A" ? "главная (A)" : "побочная (B)"}</span></div>
-        <div class="field"><span class="label">Тип элемента</span><span class="value">${typeLabel}</span></div>
-      </div>
-
-      <div class="section">
-        <h3>Строение атома</h3>
-        <div class="field"><span class="label">Заряд ядра</span><span class="value">${el.nucleusCharge}</span></div>
-        <div class="field"><span class="label">Протоны / Нейтроны / Электроны</span><span class="value">${el.protons} / ${el.neutrons} / ${el.electrons}</span></div>
-        <div class="field"><span class="label">Распределение по уровням</span><span class="value">${el.shells.join(", ")}</span></div>
-        <div class="field"><span class="label">Электронная формула</span><span class="value">${el.electronFormula}</span></div>
-        <p class="hint">Число протонов = Z, число электронов = Z, число нейтронов ≈ Ar − Z. Число уровней = номер периода.</p>
-      </div>
-
-      <div class="section">
-        <h3>Валентность и степени окисления</h3>
-        <div class="field"><span class="label">Типичные валентности</span><span class="value">${el.valences.map(v => v === 0 ? "0" : ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"][v] || v).join(", ")}</span></div>
-        <div class="field"><span class="label">Основные степени окисления</span><span class="value">${el.oxidationStates.join(", ")}</span></div>
-        <p class="hint">Высшая валентность часто совпадает с номером группы (для главных подгрупп).</p>
-      </div>
-
-      <div class="section">
-        <h3>Простое вещество</h3>
-        <div class="field"><span class="label">Формула</span><span class="value">${el.simpleFormula}</span></div>
-        <div class="field"><span class="label">Агрегатное состояние</span><span class="value">${el.aggregate}</span></div>
-        <div class="field"><span class="label">Цвет</span><span class="value">${el.color}</span></div>
-        <div class="field"><span class="label">Плотность</span><span class="value">${el.density}</span></div>
-        <div class="field"><span class="label">t плавления</span><span class="value">${el.meltingPoint}</span></div>
-        <div class="field"><span class="label">t кипения</span><span class="value">${el.boilingPoint}</span></div>
-      </div>
-
-      <div class="section">
-        <h3>Химические свойства (школьный курс)</h3>
-        <div class="field"><span class="label">Оксид</span><span class="value">${el.oxideFormula} — ${el.oxideCharacter}</span></div>
-        <div class="field"><span class="label">Гидроксид</span><span class="value">${el.hydroxideFormula} — ${el.hydroxideCharacter}</span></div>
-        ${el.acidFormula !== "—" ? `<div class="field"><span class="label">Кислота</span><span class="value">${el.acidFormula}</span></div>` : ""}
-        ${el.baseFormula !== "—" ? `<div class="field"><span class="label">Основание</span><span class="value">${el.baseFormula}</span></div>` : ""}
-      </div>
-
-      <div class="section">
-        <h3>Применение и нахождение в природе</h3>
-        ${el.facts.map(f => `<div class="field"><span class="value">• ${f}</span></div>`).join("")}
-      </div>
-
-      <div class="section">
-        <h3>Задачи</h3>
-        ${el.tasks.map(t => `<div class="task-box"><div>${t.condition}</div><div class="solution">${t.solution}</div></div>`).join("")}
-      </div>
-
-      <button class="btn-compare" onclick="addToCompare(${el.z})">Добавить в сравнение</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  overlay.querySelector(".modal-close").focus();
+/* ============ КАРТОЧКА ============ */
+let compareList=[];
+function openCard(z){
+const el=elements[z-1];
+if(!el)return;
+const ov=document.createElement("div");
+ov.className="modal-overlay";
+ov.onclick=e=>{if(e.target===ov)ov.remove();};
+const tl={M:"металл",N:"неметалл",A:"амфотерный",G:"благородный газ"}[el.type];
+ov.innerHTML=`
+<div class="modal" role="dialog" aria-modal="true">
+<button class="modal-close" onclick="this.closest('.modal-overlay').remove()" aria-label="Закрыть">×</button>
+<h2>${el.nameRu} (${el.symbol})</h2>
+<p class="subtitle">${el.nameLat} · Z = ${el.z} · Ar = ${el.ar}</p>
+<div class="section"><h3>Идентификация</h3>
+<div class="field"><span class="label">Z</span><span class="value">${el.z}</span></div>
+<div class="field"><span class="label">Ar</span><span class="value">${el.ar}</span></div>
+<div class="field"><span class="label">Период</span><span class="value">${el.period}</span></div>
+<div class="field"><span class="label">Группа</span><span class="value">${el.group}</span></div>
+<div class="field"><span class="label">Подгруппа</span><span class="value">${el.subgroup==="A"?"главная (A)":"побочная (B)"}</span></div>
+<div class="field"><span class="label">Тип</span><span class="value">${tl}</span></div></div>
+<div class="section"><h3>Строение атома</h3>
+<div class="field"><span class="label">Заряд ядра</span><span class="value">${el.nucleusCharge}</span></div>
+<div class="field"><span class="label">p / n / e</span><span class="value">${el.protons} / ${el.neutrons} / ${el.electrons}</span></div>
+<div class="field"><span class="label">Уровни</span><span class="value">${el.shells.join(", ")}</span></div>
+<div class="field"><span class="label">Формула</span><span class="value">${el.electronFormula}</span></div>
+<p class="hint">p = Z, e = Z, n ≈ Ar − Z. Уровни = номер периода.</p></div>
+<div class="section"><h3>Валентность и СО</h3>
+<div class="field"><span class="label">Валентности</span><span class="value">${el.valences.map(v=>v===0?"0":["","I","II","III","IV","V","VI","VII","VIII"][v]||v).join(", ")}</span></div>
+<div class="field"><span class="label">Степени окисления</span><span class="value">${el.oxidationStates.join(", ")}</span></div></div>
+<div class="section"><h3>Простое вещество</h3>
+<div class="field"><span class="label">Формула</span><span class="value">${el.simpleFormula}</span></div>
+<div class="field"><span class="label">Агрегатное</span><span class="value">${el.aggregate}</span></div>
+<div class="field"><span class="label">Цвет</span><span class="value">${el.color}</span></div>
+<div class="field"><span class="label">Плотность</span><span class="value">${el.density}</span></div>
+<div class="field"><span class="label">t пл.</span><span class="value">${el.meltingPoint}</span></div>
+<div class="field"><span class="label">t кип.</span><span class="value">${el.boilingPoint}</span></div></div>
+<div class="section"><h3>Химические свойства</h3>
+<div class="field"><span class="label">Оксид</span><span class="value">${el.oxideFormula} — ${el.oxideCharacter}</span></div>
+<div class="field"><span class="label">Гидроксид</span><span class="value">${el.hydroxideFormula} — ${el.hydroxideCharacter}</span></div>
+${el.acidFormula!=="—"?`<div class="field"><span class="label">Кислота</span><span class="value">${el.acidFormula}</span></div>`:""}
+${el.baseFormula!=="—"?`<div class="field"><span class="label">Основание</span><span class="value">${el.baseFormula}</span></div>`:""}</div>
+<div class="section"><h3>Применение</h3>${el.facts.map(f=>`<div class="field"><span class="value">• ${f}</span></div>`).join("")}</div>
+<div class="section"><h3>Задачи</h3>${el.tasks.map(t=>`<div class="task-box"><div>${t.condition}</div><div class="solution">${t.solution}</div></div>`).join("")}</div>
+<button class="btn-compare" onclick="addToCompare(${el.z})">Добавить в сравнение</button></div>`;
+document.body.appendChild(ov);
+ov.querySelector(".modal-close").focus();
 }
 
-/* ================================================================
-   СРАВНЕНИЕ
-   ================================================================ */
-function addToCompare(z) {
-  if (compareList.includes(z)) return;
-  if (compareList.length >= 3) compareList.shift();
-  compareList.push(z);
-  renderCompareBar();
+function addToCompare(z){if(compareList.includes(z))return;if(compareList.length>=3)compareList.shift();compareList.push(z);renderCompareBar();}
+function renderCompareBar(){
+let bar=document.querySelector(".compare-bar");
+if(!bar){bar=document.createElement("div");bar.className="compare-bar";document.body.appendChild(bar);}
+if(compareList.length===0){bar.remove();return;}
+bar.innerHTML=compareList.map(z=>{const el=elements[z-1];return `<span class="chip">${el.symbol} (${el.nameRu}) <button onclick="removeFromCompare(${z})">×</button></span>`;}).join("")+`<span style="font-size:14px;color:var(--text2)">Сравнение (${compareList.length}/3)</span>`;
+}
+function removeFromCompare(z){compareList=compareList.filter(x=>x!==z);renderCompareBar();}
+
+/* ============ КАЛЬКУЛЯТОРЫ ============ */
+const AR_MAP={};
+elements.forEach(el=>{AR_MAP[el.symbol]=el.ar;});
+
+function parseFormula(f){
+f=f.replace(/\s+/g,"");
+let pos=0;
+function parseGroup(){
+const c={};
+while(pos<f.length){
+const ch=f[pos];
+if(ch==="("){pos++;const inner=parseGroup();if(f[pos]!==")")throw new Error("Не хватает )");pos++;const num=parseNumber();for(const[s,cnt]of Object.entries(inner))c[s]=(c[s]||0)+cnt*num;}
+else if(ch===")")return c;
+else if(/[A-Z]/.test(ch)){let s=ch;pos++;while(pos<f.length&&/[a-z]/.test(f[pos])){s+=f[pos];pos++;}const num=parseNumber();c[s]=(c[s]||0)+num;}
+else throw new Error(`Символ: ${ch}`);
+}
+return c;
+}
+function parseNumber(){let n="";while(pos<f.length&&/[0-9]/.test(f[pos])){n+=f[pos];pos++;}return n?parseInt(n):1;}
+const c=parseGroup();
+if(pos!==f.length)throw new Error("Лишние символы");
+return c;
 }
 
-function renderCompareBar() {
-  let bar = document.querySelector(".compare-bar");
-  if (!bar) {
-    bar = document.createElement("div");
-    bar.className = "compare-bar";
-    document.body.appendChild(bar);
-  }
-  if (compareList.length === 0) { bar.remove(); return; }
-  bar.innerHTML = compareList.map(z => {
-    const el = elements[z - 1];
-    return `<span class="chip">${el.symbol} (${el.nameRu}) <button onclick="removeFromCompare(${z})" aria-label="Убрать">×</button></span>`;
-  }).join("") + `<span style="font-size:14px;color:var(--text-secondary)">Сравнение (${compareList.length}/3)</span>`;
+function molarMassOf(c){
+let M=0;const p=[];
+for(const[s,cnt]of Object.entries(c)){
+if(!(s in AR_MAP))throw new Error(`Неизвестный элемент: ${s}`);
+M+=AR_MAP[s]*cnt;p.push(`${AR_MAP[s]}·${cnt}`);
+}
+return{M:Math.round(M*100)/100,parts:p};
 }
 
-function removeFromCompare(z) {
-  compareList = compareList.filter(x => x !== z);
-  renderCompareBar();
+function calculateMolarMass(){
+const i=document.getElementById("formulaInput").value.trim();
+const o=document.getElementById("resultMolarMass");
+if(!i){o.textContent="Введите формулу.";return;}
+try{
+const c=parseFormula(i);
+const{M,parts}=molarMassOf(c);
+const d=Object.entries(c).map(([s,cnt])=>`${s}: ${AR_MAP[s]} × ${cnt}`).join("\n");
+o.textContent=`M(${i}) = ${parts.join(" + ")} = ${M} г/моль\n\n${d}`;
+}catch(e){o.textContent="Ошибка: "+e.message;}
 }
 
-/* ================================================================
-   КАЛЬКУЛЯТОРЫ
-   ================================================================ */
-const AR_MAP = {};
-elements.forEach(el => { AR_MAP[el.symbol] = el.ar; });
-
-// Парсер формулы с поддержкой скобок и индексов
-function parseFormula(formula) {
-  formula = formula.replace(/\s+/g, "");
-  let pos = 0;
-  function parseGroup() {
-    const counts = {};
-    while (pos < formula.length) {
-      const ch = formula[pos];
-      if (ch === "(") {
-        pos++;
-        const inner = parseGroup();
-        if (formula[pos] !== ")") throw new Error("Не хватает закрывающей скобки");
-        pos++;
-        const num = parseNumber();
-        for (const [sym, cnt] of Object.entries(inner)) counts[sym] = (counts[sym] || 0) + cnt * num;
-      } else if (ch === ")") {
-        return counts;
-      } else if (/[A-Z]/.test(ch)) {
-        let sym = ch; pos++;
-        while (pos < formula.length && /[a-z]/.test(formula[pos])) { sym += formula[pos]; pos++; }
-        const num = parseNumber();
-        counts[sym] = (counts[sym] || 0) + num;
-      } else {
-        throw new Error(`Неожиданный символ: ${ch}`);
-      }
-    }
-    return counts;
-  }
-  function parseNumber() {
-    let num = "";
-    while (pos < formula.length && /[0-9]/.test(formula[pos])) { num += formula[pos]; pos++; }
-    return num ? parseInt(num) : 1;
-  }
-  const counts = parseGroup();
-  if (pos !== formula.length) throw new Error("Лишние символы в формуле");
-  return counts;
+function calculateMassFraction(){
+const f=document.getElementById("mfFormula").value.trim();
+const s=document.getElementById("mfElement").value.trim();
+const o=document.getElementById("resultMassFraction");
+if(!f||!s){o.textContent="Заполните оба поля.";return;}
+try{
+const c=parseFormula(f);
+if(!(s in c))throw new Error(`Элемент ${s} не входит`);
+const{M}=molarMassOf(c);
+const ar=AR_MAP[s];
+const w=(ar*c[s]/M)*100;
+o.textContent=`ω(${s}) = (${ar} × ${c[s]}) / ${M} × 100% = ${w.toFixed(1)}%`;
+}catch(e){o.textContent="Ошибка: "+e.message;}
 }
 
-function molarMassOf(counts) {
-  let M = 0;
-  const parts = [];
-  for (const [sym, cnt] of Object.entries(counts)) {
-    if (!(sym in AR_MAP)) throw new Error(`Неизвестный элемент: ${sym}`);
-    const ar = AR_MAP[sym];
-    M += ar * cnt;
-    parts.push(`${ar}·${cnt}`);
-  }
-  return { M: Math.round(M * 100) / 100, parts };
+function toggleAmountFields(){
+const m=document.getElementById("amountMode").value;
+document.getElementById("amountMassFields").hidden=m!=="mass";
+document.getElementById("amountVolumeFields").hidden=m!=="volume";
 }
 
-function calculateMolarMass() {
-  const input = document.getElementById("formulaInput").value.trim();
-  const out = document.getElementById("resultMolarMass");
-  if (!input) { out.textContent = "Введите формулу."; return; }
-  try {
-    const counts = parseFormula(input);
-    const { M, parts } = molarMassOf(counts);
-    const detail = Object.entries(counts).map(([sym, cnt]) => `${sym}: ${AR_MAP[sym]} × ${cnt}`).join("\n");
-    out.textContent = `M(${input}) = ${parts.join(" + ")} = ${M} г/моль\n\nПодробно:\n${detail}`;
-  } catch (e) {
-    out.textContent = "Ошибка: " + e.message;
-  }
+function calculateAmount(){
+const m=document.getElementById("amountMode").value;
+const o=document.getElementById("resultAmount");
+if(m==="mass"){
+const M=parseFloat(document.getElementById("amountM").value);
+const mass=parseFloat(document.getElementById("amountm").value);
+if(!M||!mass){o.textContent="Введите M и m.";return;}
+o.textContent=`n = m / M = ${mass} г / ${M} г/моль = ${(mass/M).toFixed(3)} моль`;
+}else{
+const V=parseFloat(document.getElementById("amountV").value);
+if(!V){o.textContent="Введите V.";return;}
+o.textContent=`n = V / Vm = ${V} л / 22,4 л/моль = ${(V/22.4).toFixed(3)} моль`;
+}
 }
 
-function calculateMassFraction() {
-  const formula = document.getElementById("mfFormula").value.trim();
-  const sym = document.getElementById("mfElement").value.trim();
-  const out = document.getElementById("resultMassFraction");
-  if (!formula || !sym) { out.textContent = "Заполните оба поля."; return; }
-  try {
-    const counts = parseFormula(formula);
-    if (!(sym in counts)) throw new Error(`Элемент ${sym} не входит в формулу.`);
-    const { M } = molarMassOf(counts);
-    const ar = AR_MAP[sym];
-    const massEl = ar * counts[sym];
-    const omega = (massEl / M) * 100;
-    out.textContent = `ω(${sym}) = (${ar} × ${counts[sym]}) / ${M} × 100% = ${omega.toFixed(1)}%`;
-  } catch (e) {
-    out.textContent = "Ошибка: " + e.message;
-  }
+function calculateParticles(){
+const n=parseFloat(document.getElementById("particlesN").value);
+const o=document.getElementById("resultParticles");
+if(!n){o.textContent="Введите n.";return;}
+const N=n*6.02e23;
+o.textContent=`N = n × N_A = ${n} × 6,02·10²³ = ${N.toExponential(2)} частиц`;
 }
 
-function toggleAmountFields() {
-  const mode = document.getElementById("amountMode").value;
-  document.getElementById("amountMassFields").hidden = mode !== "mass";
-  document.getElementById("amountVolumeFields").hidden = mode !== "volume";
-}
-
-function calculateAmount() {
-  const mode = document.getElementById("amountMode").value;
-  const out = document.getElementById("resultAmount");
-  if (mode === "mass") {
-    const M = parseFloat(document.getElementById("amountM").value);
-    const m = parseFloat(document.getElementById("amountm").value);
-    if (!M || !m) { out.textContent = "Введите M и m."; return; }
-    const n = m / M;
-    out.textContent = `n = m / M = ${m} г / ${M} г/моль = ${n.toFixed(3)} моль`;
-  } else {
-    const V = parseFloat(document.getElementById("amountV").value);
-    if (!V) { out.textContent = "Введите V."; return; }
-    const n = V / 22.4;
-    out.textContent = `n = V / Vm = ${V} л / 22,4 л/моль = ${n.toFixed(3)} моль`;
-  }
-}
-
-function calculateParticles() {
-  const n = parseFloat(document.getElementById("particlesN").value);
-  const out = document.getElementById("resultParticles");
-  if (!n) { out.textContent = "Введите n."; return; }
-  const N = n * 6.02e23;
-  out.textContent = `N = n × N_A = ${n} моль × 6,02·10²³ моль⁻¹ = ${N.toExponential(2)} частиц`;
-}
-
-// Переключение вкладок калькулятора
-document.querySelectorAll(".calc-tabs button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".calc-tabs button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".calc-panel").forEach(p => p.hidden = true);
-    document.getElementById("calc-" + btn.dataset.calc).hidden = false;
-  });
+document.querySelectorAll(".calc-tabs button").forEach(b=>{
+b.addEventListener("click",()=>{
+document.querySelectorAll(".calc-tabs button").forEach(x=>x.classList.remove("active"));
+b.classList.add("active");
+document.querySelectorAll(".calc-panel").forEach(p=>p.hidden=true);
+document.getElementById("calc-"+b.dataset.calc).hidden=false;
+});
 });
 
-/* ================================================================
-   ТРЕНАЖЁР
-   ================================================================ */
-let currentTask = null;
+/* ============ ФОРМУЛЫ (50 штук) ============ */
+const formulasData=[
+// ХИМИЯ — РАСЧЁТЫ (7 формул)
+{id:"mr",subject:"chem",topic:"calc",grade:"8",title:"Относительная молекулярная масса",formula:"M<sub>r</sub> = Σ A<sub>r</sub>",what:"Сумма относительных атомных масс всех атомов в молекуле.",symbols:[{sym:"M<sub>r</sub>",desc:"молекулярная масса"},{sym:"A<sub>r</sub>",desc:"атомная масса элемента"}],example:{task:"M<sub>r</sub>(H₂SO₄)",steps:["2·1 + 32 + 4·16","= 2 + 32 + 64","= 98"],answer:"M<sub>r</sub> = 98"},tip:"Индекс умножается на Ar каждого элемента."},
+{id:"molar-mass",subject:"chem",topic:"calc",grade:"8",title:"Молярная масса",formula:"M = m / n",formulaDetails:"m = M · n &nbsp;|&nbsp; n = m / M",what:"Масса одного моля вещества в г/моль. Численно = Mr.",symbols:[{sym:"M",desc:"молярная масса",unit:"г/моль"},{sym:"m",desc:"масса",unit:"г"},{sym:"n",desc:"количество",unit:"моль"}],example:{task:"Масса 2 моль H₂O",steps:["M(H₂O) = 18 г/моль","m = 18 · 2","m = 36 г"],answer:"m = 36 г"},tip:"M и Mr численно равны, но M имеет единицу г/моль."},
+{id:"amount-mass",subject:"chem",topic:"calc",grade:"8",title:"Количество вещества по массе",formula:"n = m / M",what:"Находит моли через массу и молярную массу.",symbols:[{sym:"n",desc:"моли",unit:"моль"},{sym:"m",desc:"масса",unit:"г"},{sym:"M",desc:"молярная масса",unit:"г/моль"}],example:{task:"n для 36 г H₂O",steps:["n = 36 / 18"],answer:"n = 2 моль"},tip:"Универсальная формула для большинства задач."},
+{id:"amount-volume",subject:"chem",topic:"calc",grade:"8",title:"Количество вещества по объёму газа",formula:"n = V / V<sub>m</sub>",what:"Моли газа через объём при н.у. Vm = 22,4 л/моль.",symbols:[{sym:"V",desc:"объём газа",unit:"л"},{sym:"V<sub>m</sub>",desc:"молярный объём",unit:"22,4 л/моль"}],example:{task:"n для 44,8 л CO₂",steps:["n = 44,8 / 22,4"],answer:"n = 2 моль"},tip:"Только для газов и только при н.у."},
+{id:"amount-particles",subject:"chem",topic:"calc",grade:"8",title:"Количество вещества через число частиц",formula:"n = N / N<sub>A</sub>",what:"Моли через число частиц и постоянную Авогадро.",symbols:[{sym:"N",desc:"число частиц"},{sym:"N<sub>A</sub>",desc:"6,02·10²³ моль⁻¹"}],example:{task:"n для 3,01·10²³ молекул",steps:["n = 3,01·10²³ / 6,02·10²³"],answer:"n = 0,5 моль"},tip:"NA — число частиц в одном моле вещества."},
+{id:"particles",subject:"chem",topic:"calc",grade:"8",title:"Число частиц",formula:"N = n · N<sub>A</sub>",what:"Сколько атомов/молекул в данном количестве вещества.",symbols:[{sym:"N",desc:"число частиц"},{sym:"n",desc:"моли"},{sym:"N<sub>A</sub>",desc:"6,02·10²³"}],example:{task:"N в 0,5 моль",steps:["N = 0,5 · 6,02·10²³"],answer:"N = 3,01·10²³"},tip:"NA ≈ 6,02·10²³ моль⁻¹."},
+{id:"mass-fraction-el",subject:"chem",topic:"calc",grade:"8",title:"Массовая доля элемента",formula:"ω(Э) = (n·A<sub>r</sub>) / M<sub>r</sub> · 100%",what:"Доля массы элемента в веществе. Сумма ω всех элементов = 100%.",symbols:[{sym:"ω",desc:"массовая доля",unit:"%"},{sym:"n",desc:"число атомов элемента"}],example:{task:"ω(O) в H₂O",steps:["Mr(H₂O) = 18","ω(O) = 16/18 · 100%"],answer:"ω(O) ≈ 88,9%"},tip:"Проверка: сумма ω = 100%."},
+// ХИМИЯ — ВАЛЕНТНОСТЬ И СО (3)
+{id:"valence",subject:"chem",topic:"valence",grade:"8",title:"Правило валентности",formula:"a·y = b·x",formulaDetails:"A<sup>a</sup><sub>x</sub>B<sup>b</sup><sub>y</sub>",what:"Валентности элементов уравновешивают друг друга.",symbols:[{sym:"a,b",desc:"валентности"},{sym:"x,y",desc:"индексы"}],example:{task:"Al₂O₃ по Al(III) и O(II)",steps:["НОК(3,2) = 6","Индекс Al: 6/3 = 2","Индекс O: 6/2 = 3"],answer:"Al₂O₃"},tip:"Постоянные: H(I), O(II), F(I), Na(I), K(I), Ca(II), Mg(II), Al(III)."},
+{id:"oxstate",subject:"chem",topic:"oxstate",grade:"8",title:"Степени окисления: правила",formula:"Σ СО = 0 (в молекуле)",formulaDetails:"Σ СО = заряд иона",what:"Условный заряд атома. O обычно −2, H обычно +1, простые = 0.",symbols:[{sym:"СО",desc:"степень окисления"}],example:{task:"СО(S) в H₂SO₄",steps:["H: +2, O: −8","2 + x − 8 = 0","x = +6"],answer:"СО(S) = +6"},tip:"Не путайте СО и валентность."},
+{id:"oxstate-exc",subject:"chem",topic:"oxstate",grade:"9",title:"Исключения в степенях окисления",formula:"H₂O₂: O = −1",formulaDetails:"OF₂: O = +2 &nbsp;|&nbsp; NaH: H = −1",what:"Правила «O −2, H +1» работают не всегда.",symbols:[{sym:"H₂O₂",desc:"пероксид",unit:"O: −1"},{sym:"NaH",desc:"гидрид",unit:"H: −1"}],example:{task:"СО(O) в H₂O₂",steps:["H: +2","2·(−1) = −2","+2 − 2 = 0 ✓"],answer:"СО(O) = −1"},tip:"Ищите исключения, если сумма ≠ 0."},
+// ХИМИЯ — УРАВНЕНИЯ И РЕАКЦИИ (3)
+{id:"balance",subject:"chem",topic:"equations",grade:"8",title:"Закон сохранения массы",formula:"m(реагентов) = m(продуктов)",what:"Число атомов каждого элемента слева и справа одинаково.",symbols:[{sym:"коэффициент",desc:"число перед формулой"},{sym:"индекс",desc:"число атомов в формуле"}],example:{task:"Al + O₂ → Al₂O₃",steps:["4Al + 3O₂ = 2Al₂O₃","Проверка Al: 4 = 2·2","Проверка O: 6 = 2·3"],answer:"4Al + 3O₂ = 2Al₂O₃"},tip:"Сначала металлы, потом неметаллы, в конце H и O."},
+{id:"reaction-types",subject:"chem",topic:"reactions",grade:"8",title:"Типы реакций",formula:"Соединение: A+B → AB",formulaDetails:"Разложение: AB → A+B<br>Замещение: A+BC → AC+B<br>Обмен: AB+CD → AD+CB",what:"4 основных типа реакций по числу реагентов и продуктов.",symbols:[{sym:"соединение",desc:"из нескольких — одно"},{sym:"разложение",desc:"из одного — несколько"},{sym:"замещение",desc:"простое + сложное"},{sym:"обмен",desc:"два сложных обмениваются"}],example:{task:"Fe + CuSO₄ → FeSO₄ + Cu",steps:["Fe — простое, CuSO₄ — сложное","Продукты: соль + металл","Простое вытеснило часть сложного"],answer:"Замещение"},tip:"Обмен идёт до конца при осадке, газе или воде."},
+{id:"periodic-law",subject:"chem",topic:"reactions",grade:"8",title:"Периодический закон",formula:"Свойства элементов зависят от заряда ядра",what:"Свойства элементов и соединений периодически зависят от заряда ядра.",symbols:[{sym:"Z",desc:"заряд ядра"}],example:{task:"Как меняются свойства в периоде?",steps:["Слева направо: металлические ↓, неметаллические ↑","Сверху вниз в группе: металлические ↑","Радиус атома: слева направо ↓, сверху вниз ↑"],answer:"В периоде металлические свойства ослабевают"},tip:"Отражение периодического закона — таблица Менделеева."},
+// ХИМИЯ — КЛАССЫ (4)
+{id:"oxides",subject:"chem",topic:"classes",grade:"8",title:"Оксиды",formula:"Э<sub>x</sub>O<sub>y</sub>",what:"Соединения элемента с кислородом. Основные (металл), кислотные (неметалл), амфотерные.",symbols:[{sym:"Э",desc:"элемент"},{sym:"O",desc:"кислород"}],example:{task:"Na₂O, SO₃, Al₂O₃ — характер?",steps:["Na — металл → основной","S — неметалл → кислотный","Al — амфотерный → амфотерный"],answer:"Основной, кислотный, амфотерный"},tip:"Оксид — на втором месте всегда O."},
+{id:"acids",subject:"chem",topic:"classes",grade:"8",title:"Кислоты",formula:"H<sub>n</sub>(кислотный остаток)",what:"Содержат H, способный замещаться на металл. HCl, H₂SO₄, HNO₃, H₃PO₄.",symbols:[{sym:"H",desc:"первый в формуле"},{sym:"n",desc:"основность"}],example:{task:"Основность H₂SO₄ и H₃PO₄",steps:["H₂SO₄: 2H → двухосновная","H₃PO₄: 3H → трёхосновная"],answer:"2 и 3 соответственно"},tip:"Кислородсодержащие: H₂SO₄, HNO₃. Бескислородные: HCl, H₂S."},
+{id:"bases",subject:"chem",topic:"classes",grade:"8",title:"Основания",formula:"Me(OH)<sub>n</sub>",what:"Содержат OH⁻. Растворимые — щёлочи (NaOH, KOH, Ca(OH)₂, Ba(OH)₂).",symbols:[{sym:"Me",desc:"металл"},{sym:"OH",desc:"гидроксид"},{sym:"n",desc:"число OH-групп"}],example:{task:"Гидроксид кальция",steps:["Ca(II), OH(I)","Ca(OH)₂"],answer:"Ca(OH)₂"},tip:"Растворимые основания = щёлочи."},
+{id:"salts",subject:"chem",topic:"classes",grade:"8",title:"Соли",formula:"Me<sub>x</sub>(кислотный остаток)<sub>y</sub>",what:"Продукт замещения H кислоты на металл. NaCl, CuSO₄, CaCO₃.",symbols:[{sym:"Me",desc:"металл"},{sym:"остаток",desc:"SO₄, NO₃, Cl, CO₃"}],example:{task:"Сульфат алюминия",steps:["Al(III), SO₄(II)","Al₂(SO₄)₃"],answer:"Al₂(SO₄)₃"},tip:"Средние, кислые, основные соли — по числу замещённых H."},
+// ХИМИЯ — ДОПОЛНИТЕЛЬНЫЕ (5)
+{id:"solution-fraction",subject:"chem",topic:"calc",grade:"8",title:"Массовая доля растворённого вещества",formula:"ω = m<sub>в-ва</sub> / m<sub>р-ра</sub> · 100%",what:"Доля растворённого вещества в растворе.",symbols:[{sym:"ω",desc:"массовая доля",unit:"%"},{sym:"m<sub>в-ва</sub>",desc:"масса вещества"},{sym:"m<sub>р-ра</sub>",desc:"масса раствора"}],example:{task:"ω соли в 200 г р-ра с 20 г соли",steps:["ω = 20/200 · 100%"],answer:"ω = 10%"},tip:"m(р-ра) = m(в-ва) + m(растворителя)."},
+{id:"atom-structure",subject:"chem",topic:"atom",grade:"8",title:"Строение атома",formula:"Z = p = e",formulaDetails:"n = Ar − Z",what:"Порядковый номер = протоны = электроны. Нейтроны ≈ Ar − Z.",symbols:[{sym:"Z",desc:"заряд ядра"},{sym:"p",desc:"протоны"},{sym:"e",desc:"электроны"},{sym:"n",desc:"нейтроны"}],example:{task:"Строение натрия (Z=11, Ar=23)",steps:["p = 11, e = 11","n = 23 − 11 = 12","Уровни: 2, 8, 1"],answer:"11p, 12n, 11e"},tip:"Число электронных слоёв = номер периода."},
+{id:"relative-density",subject:"chem",topic:"calc",grade:"8",title:"Относительная плотность газа",formula:"D = M₁ / M₂",what:"Отношение молярных масс двух газов. D по H₂ и по воздуху.",symbols:[{sym:"D",desc:"относительная плотность"},{sym:"M₁",desc:"M газа"},{sym:"M₂",desc:"M сравнения (H₂ = 2, воздух ≈ 29)"}],example:{task:"D(CO₂) по H₂",steps:["M(CO₂) = 44","D = 44/2"],answer:"D = 22"},tip:"D по воздуху = M/29."},
+{id:"molar-concentration",subject:"chem",topic:"calc",grade:"8",title:"Молярная концентрация",formula:"C = n / V",what:"Сколько моль вещества в 1 л раствора.",symbols:[{sym:"C",desc:"концентрация",unit:"моль/л (М)"},{sym:"n",desc:"моли"},{sym:"V",desc:"объём р-ра",unit:"л"}],example:{task:"C для 2 моль в 4 л",steps:["C = 2/4"],answer:"C = 0,5 моль/л"},tip:"1 М = 1 моль/л."},
+{id:"yield",subject:"chem",topic:"calc",grade:"9",title:"Выход продукта реакции",formula:"η = m<sub>практ</sub> / m<sub>теор</sub> · 100%",what:"Отношение практической массы к теоретически возможной.",symbols:[{sym:"η",desc:"выход",unit:"%"},{sym:"m<sub>практ</sub>",desc:"получено фактически"},{sym:"m<sub>теор</sub>",desc:"рассчитано"}],example:{task:"Теор 20 г, практ 16 г",steps:["η = 16/20 · 100%"],answer:"η = 80%"},tip:"Выход всегда ≤ 100%."},
 
-const taskTemplates = [
-  {
-    generate() {
-      const el = elements.filter(e => e.isSchool && e.ar > 0)[Math.floor(Math.random() * elements.filter(e => e.isSchool).length)];
-      return {
-        text: `Вычислите молярную массу простого вещества ${el.symbol} (Ar = ${el.ar}).`,
-        answer: el.ar,
-        solution: `M(${el.symbol}) = ${el.ar} г/моль.`
-      };
-    }
-  },
-  {
-    generate() {
-      const el = elements.filter(e => e.isSchool)[Math.floor(Math.random() * elements.filter(e => e.isSchool).length)];
-      return {
-        text: `Сколько протонов и электронов в атоме ${el.nameRu} (Z = ${el.z})?`,
-        answer: el.z,
-        solution: `Число протонов = Z = ${el.z}. Число электронов = Z = ${el.z}.`
-      };
-    }
-  },
-  {
-    generate() {
-      const el = elements.filter(e => e.isSchool && e.valences.length > 0)[Math.floor(Math.random() * elements.filter(e => e.isSchool && e.valences.length > 0).length)];
-      const v = el.valences[0];
-      return {
-        text: `Какова типичная валентность ${el.nameRu} (${el.symbol})?`,
-        answer: v,
-        solution: `Типичная валентность ${el.symbol} — ${["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"][v] || v}.`
-      };
-    }
-  }
+// ФИЗИКА — ДВИЖЕНИЕ (3)
+{id:"speed",subject:"phys",topic:"motion",grade:"7",title:"Скорость",formula:"v = S / t",formulaDetails:"S = v · t &nbsp;|&nbsp; t = S / v",what:"Путь за единицу времени при равномерном движении.",symbols:[{sym:"v",desc:"скорость",unit:"м/с"},{sym:"S",desc:"путь",unit:"м"},{sym:"t",desc:"время",unit:"с"}],example:{task:"120 км за 2 ч",steps:["v = 120/2"],answer:"v = 60 км/ч"},tip:"1 км/ч ≈ 0,28 м/с."},
+{id:"acceleration",subject:"phys",topic:"motion",grade:"9",title:"Ускорение",formula:"a = (v − v₀) / t",formulaDetails:"v = v₀ + a·t",what:"Изменение скорости за единицу времени.",symbols:[{sym:"a",desc:"ускорение",unit:"м/с²"},{sym:"v,v₀",desc:"конечная/начальная скорость"},{sym:"t",desc:"время"}],example:{task:"Скорость с 5 до 15 м/с за 2 с",steps:["a = (15−5)/2"],answer:"a = 5 м/с²"},tip:"При торможении a < 0."},
+{id:"path-accel",subject:"phys",topic:"motion",grade:"9",title:"Путь при равноускоренном движении",formula:"S = v₀t + at²/2",what:"Путь с начальной скоростью и ускорением.",symbols:[{sym:"S",desc:"путь"},{sym:"v₀",desc:"начальная скорость"},{sym:"a",desc:"ускорение"},{sym:"t",desc:"время"}],example:{task:"v₀=0, a=2, t=3",steps:["S = 0·3 + 2·9/2","S = 9"],answer:"S = 9 м"},tip:"При v₀ = 0: S = at²/2."},
+// ФИЗИКА — ПЛОТНОСТЬ И ДАВЛЕНИЕ (3)
+{id:"density",subject:"phys",topic:"density",grade:"7",title:"Плотность",formula:"ρ = m / V",formulaDetails:"m = ρV &nbsp;|&nbsp; V = m/ρ",what:"Масса в единице объёма.",symbols:[{sym:"ρ",desc:"плотность",unit:"кг/м³"},{sym:"m",desc:"масса",unit:"кг"},{sym:"V",desc:"объём",unit:"м³"}],example:{task:"1 кг, 0,001 м³",steps:["ρ = 1/0,001"],answer:"ρ = 1000 кг/м³"},tip:"1 г/см³ = 1000 кг/м³. Вода: 1000."},
+{id:"pressure-solid",subject:"phys",topic:"density",grade:"7",title:"Давление твёрдого тела",formula:"p = F / S",what:"Сила, действующая на единицу площади.",symbols:[{sym:"p",desc:"давление",unit:"Па"},{sym:"F",desc:"сила",unit:"Н"},{sym:"S",desc:"площадь",unit:"м²"}],example:{task:"100 Н на 0,02 м²",steps:["p = 100/0,02"],answer:"p = 5000 Па"},tip:"1 кПа = 1000 Па."},
+{id:"pressure-liquid",subject:"phys",topic:"density",grade:"7",title:"Давление жидкости",formula:"p = ρgh",what:"Давление столба жидкости на глубине.",symbols:[{sym:"ρ",desc:"плотность жидкости"},{sym:"g",desc:"≈10 м/с²"},{sym:"h",desc:"глубина"}],example:{task:"Вода, h=2 м",steps:["p = 1000·10·2"],answer:"p = 20 кПа"},tip:"Не зависит от формы сосуда."},
+// ФИЗИКА — СИЛЫ (4)
+{id:"gravity",subject:"phys",topic:"forces",grade:"7",title:"Сила тяжести",formula:"F<sub>тяж</sub> = mg",what:"Сила притяжения Земли.",symbols:[{sym:"F",desc:"сила",unit:"Н"},{sym:"m",desc:"масса",unit:"кг"},{sym:"g",desc:"≈10 м/с²"}],example:{task:"m=2 кг",steps:["F = 2·10"],answer:"F = 20 Н"},tip:"Не путайте массу (кг) и силу (Н)."},
+{id:"newton2",subject:"phys",topic:"forces",grade:"9",title:"Второй закон Ньютона",formula:"F = ma",what:"Ускорение прямо пропорционально силе, обратно массе.",symbols:[{sym:"F",desc:"сила",unit:"Н"},{sym:"m",desc:"масса"},{sym:"a",desc:"ускорение"}],example:{task:"F=6 Н, m=2 кг",steps:["a = 6/2"],answer:"a = 3 м/с²"},tip:"F — равнодействующая всех сил."},
+{id:"hooke",subject:"phys",topic:"forces",grade:"7",title:"Закон Гука",formula:"F<sub>упр</sub> = kΔx",what:"Сила упругости пропорциональна удлинению.",symbols:[{sym:"k",desc:"жёсткость",unit:"Н/м"},{sym:"Δx",desc:"удлинение",unit:"м"}],example:{task:"k=100, Δx=0,05",steps:["F = 100·0,05"],answer:"F = 5 Н"},tip:"См → м: 1 см = 0,01 м."},
+{id:"friction",subject:"phys",topic:"forces",grade:"7",title:"Сила трения",formula:"F<sub>тр</sub> = μN",what:"Трение скольжения по поверхности.",symbols:[{sym:"μ",desc:"коэффициент трения"},{sym:"N",desc:"сила нормального давления"}],example:{task:"μ=0,2, N=50 Н",steps:["F = 0,2·50"],answer:"F = 10 Н"},tip:"μ зависит от материалов."},
+// ФИЗИКА — РАБОТА И ЭНЕРГИЯ (5)
+{id:"work",subject:"phys",topic:"work",grade:"7",title:"Механическая работа",formula:"A = F·S",what:"Работа при перемещении тела силой.",symbols:[{sym:"A",desc:"работа",unit:"Дж"},{sym:"F",desc:"сила",unit:"Н"},{sym:"S",desc:"перемещение",unit:"м"}],example:{task:"F=20 Н, S=5 м",steps:["A = 20·5"],answer:"A = 100 Дж"},tip:"Сила ⊥ перемещению → A=0."},
+{id:"power",subject:"phys",topic:"work",grade:"7",title:"Мощность",formula:"N = A / t",what:"Работа за единицу времени.",symbols:[{sym:"N",desc:"мощность",unit:"Вт"},{sym:"A",desc:"работа",unit:"Дж"},{sym:"t",desc:"время",unit:"с"}],example:{task:"1000 Дж за 10 с",steps:["N = 1000/10"],answer:"N = 100 Вт"},tip:"1 кВт = 1000 Вт."},
+{id:"kinetic",subject:"phys",topic:"energy",grade:"8",title:"Кинетическая энергия",formula:"E<sub>к</sub> = mv² / 2",what:"Энергия движения.",symbols:[{sym:"E<sub>к</sub>",desc:"энергия",unit:"Дж"},{sym:"m",desc:"масса"},{sym:"v",desc:"скорость"}],example:{task:"m=2 кг, v=3 м/с",steps:["E = 2·9/2"],answer:"E = 9 Дж"},tip:"v² — скорость в квадрате."},
+{id:"potential",subject:"phys",topic:"energy",grade:"8",title:"Потенциальная энергия",formula:"E<sub>п</sub> = mgh",what:"Энергия тела на высоте.",symbols:[{sym:"m",desc:"масса"},{sym:"g",desc:"≈10"},{sym:"h",desc:"высота"}],example:{task:"m=2, h=5",steps:["E = 2·10·5"],answer:"E = 100 Дж"},tip:"h от выбранного уровня отсчёта."},
+{id:"efficiency-mech",subject:"phys",topic:"work",grade:"7",title:"КПД механизма",formula:"η = A<sub>полезн</sub> / A<sub>затр</sub> · 100%",what:"Отношение полезной работы к затраченной.",symbols:[{sym:"η",desc:"КПД",unit:"%"},{sym:"A",desc:"работа"}],example:{task:"Полезн 80 Дж, затр 100 Дж",steps:["η = 80/100 · 100%"],answer:"η = 80%"},tip:"КПД всегда < 100%."},
+// ФИЗИКА — ТЕПЛОТА (4)
+{id:"heat-heat",subject:"phys",topic:"heat",grade:"8",title:"Теплота нагревания",formula:"Q = cmΔt",what:"Теплота для нагрева или при охлаждении.",symbols:[{sym:"Q",desc:"теплота",unit:"Дж"},{sym:"c",desc:"удельная теплоёмкость",unit:"Дж/(кг·°C)"},{sym:"m",desc:"масса"},{sym:"Δt",desc:"изменение t"}],example:{task:"2 кг воды на 10 °C",steps:["Q = 4200·2·10"],answer:"Q = 84 кДж"},tip:"c воды = 4200 Дж/(кг·°C)."},
+{id:"heat-burn",subject:"phys",topic:"heat",grade:"8",title:"Теплота сгорания топлива",formula:"Q = qm",what:"Теплота при полном сгорании.",symbols:[{sym:"q",desc:"удельная теплота сгорания",unit:"Дж/кг"},{sym:"m",desc:"масса"}],example:{task:"2 кг бензина (q=4,6·10⁷)",steps:["Q = 4,6·10⁷·2"],answer:"Q = 9,2·10⁷ Дж"},tip:"q — табличная величина."},
+{id:"heat-melt",subject:"phys",topic:"heat",grade:"8",title:"Теплота плавления",formula:"Q = λm",what:"Теплота для плавления (при t плавления).",symbols:[{sym:"λ",desc:"удельная теплота плавления",unit:"Дж/кг"},{sym:"m",desc:"масса"}],example:{task:"1 кг льда (λ=3,4·10⁵)",steps:["Q = 3,4·10⁵·1"],answer:"Q = 3,4·10⁵ Дж"},tip:"Температура не меняется при плавлении."},
+{id:"heat-vapor",subject:"phys",topic:"heat",grade:"8",title:"Теплота парообразования",formula:"Q = Lm",what:"Теплота для испарения (при t кипения).",symbols:[{sym:"L",desc:"удельная теплота парообразования",unit:"Дж/кг"},{sym:"m",desc:"масса"}],example:{task:"1 кг воды (L=2,3·10⁶)",steps:["Q = 2,3·10⁶·1"],answer:"Q = 2,3·10⁶ Дж"},tip:"Для воды L = 2,3·10⁶ Дж/кг."},
+// ФИЗИКА — ЭЛЕКТРИЧЕСТВО (6)
+{id:"current",subject:"phys",topic:"electricity",grade:"8",title:"Сила тока",formula:"I = q/t",what:"Заряд за единицу времени.",symbols:[{sym:"I",desc:"сила тока",unit:"А"},{sym:"q",desc:"заряд",unit:"Кл"},{sym:"t",desc:"время"}],example:{task:"10 Кл за 2 с",steps:["I = 10/2"],answer:"I = 5 А"},tip:"Амперметр — последовательно."},
+{id:"ohm",subject:"phys",topic:"electricity",grade:"8",title:"Закон Ома",formula:"I = U/R",formulaDetails:"U = IR &nbsp;|&nbsp; R = U/I",what:"Ток через участок цепи.",symbols:[{sym:"I",desc:"ток",unit:"А"},{sym:"U",desc:"напряжение",unit:"В"},{sym:"R",desc:"сопротивление",unit:"Ом"}],example:{task:"U=12 В, R=6 Ом",steps:["I = 12/6"],answer:"I = 2 А"},tip:"Вольтметр — параллельно."},
+{id:"electric-power",subject:"phys",topic:"electricity",grade:"8",title:"Мощность тока",formula:"P = UI",formulaDetails:"P = I²R &nbsp;|&nbsp; P = U²/R",what:"Мощность на участке цепи.",symbols:[{sym:"P",desc:"мощность",unit:"Вт"},{sym:"U",desc:"напряжение"},{sym:"I",desc:"ток"}],example:{task:"U=12 В, I=2 А",steps:["P = 12·2"],answer:"P = 24 Вт"},tip:"P = I²R удобно, когда известно R."},
+{id:"joule-lenz",subject:"phys",topic:"electricity",grade:"8",title:"Закон Джоуля–Ленца",formula:"Q = I²Rt",what:"Теплота, выделяемая проводником с током.",symbols:[{sym:"Q",desc:"теплота",unit:"Дж"},{sym:"I",desc:"ток"},{sym:"R",desc:"сопротивление"},{sym:"t",desc:"время"}],example:{task:"I=2, R=6, t=10",steps:["Q = 4·6·10"],answer:"Q = 240 Дж"},tip:"Так работают нагреватели."},
+{id:"series",subject:"phys",topic:"electricity",grade:"8",title:"Последовательное соединение",formula:"R = R₁ + R₂ + …",formulaDetails:"I = I₁ = I₂ &nbsp;|&nbsp; U = U₁ + U₂",what:"Ток одинаков, напряжения складываются.",symbols:[{sym:"R",desc:"общее сопротивление"},{sym:"I",desc:"одинаковый ток"},{sym:"U",desc:"сумма напряжений"}],example:{task:"R₁=2, R₂=3",steps:["R = 2+3"],answer:"R = 5 Ом"},tip:"Один разрыв — цепь не работает."},
+{id:"parallel",subject:"phys",topic:"electricity",grade:"8",title:"Параллельное соединение",formula:"1/R = 1/R₁ + 1/R₂",formulaDetails:"U = U₁ = U₂ &nbsp;|&nbsp; I = I₁ + I₂",what:"Напряжение одинаково, токи складываются.",symbols:[{sym:"R",desc:"общее сопротивление"},{sym:"U",desc:"одинаковое"},{sym:"I",desc:"сумма токов"}],example:{task:"R₁=R₂=2 Ом",steps:["1/R = 1/2 + 1/2 = 1","R = 1 Ом"],answer:"R = 1 Ом"},tip:"Общее R меньше наименьшего."},
+// ФИЗИКА — АРХИМЕД (2)
+{id:"archimedes",subject:"phys",topic:"forces",grade:"7",title:"Сила Архимеда",formula:"F<sub>А</sub> = ρ<sub>ж</sub>·g·V",what:"Выталкивающая сила жидкости на погружённое тело.",symbols:[{sym:"F<sub>А</sub>",desc:"сила Архимеда",unit:"Н"},{sym:"ρ<sub>ж</sub>",desc:"плотность жидкости"},{sym:"V",desc:"объём погружённой части"}],example:{task:"V=0,001 м³ в воде",steps:["F = 1000·10·0,001"],answer:"F = 10 Н"},tip:"Равна весу вытесненной жидкости."},
+{id:"float",subject:"phys",topic:"forces",grade:"7",title:"Условие плавания тел",formula:"ρ<sub>тела</sub> ? ρ<sub>жидкости</sub>",what:"Плавание, всплытие, погружение.",symbols:[{sym:"<",desc:"всплывает"},{sym:"=",desc:"плавает (на поверхности)"},{sym:">",desc:"тонет"}],example:{task:"Лёд в воде",steps:["ρ льда ≈ 900 < 1000","Лёд плавает"],answer:"Плавает"},tip:"Лёд всплывает, потому что ρ льда < ρ воды."}
 ];
 
-function newTask() {
-  const template = taskTemplates[Math.floor(Math.random() * taskTemplates.length)];
-  currentTask = template.generate();
-  document.getElementById("taskText").textContent = currentTask.text;
-  document.getElementById("taskAnswer").value = "";
-  document.getElementById("trainerFeedback").hidden = true;
-  document.getElementById("trainerSolution").hidden = true;
+const topicsBySubject={
+chem:{calc:"Расчёты",valence:"Валентность",oxstate:"Степени окисления",equations:"Уравнения",reactions:"Типы реакций",classes:"Классы веществ",atom:"Строение атома"},
+phys:{motion:"Движение",density:"Плотность и давление",forces:"Силы",work:"Работа и мощность",energy:"Энергия",heat:"Тепловые явления",electricity:"Электричество"}
+};
+
+let currentSubject="chem";
+let formulaFavorites=[];
+try{formulaFavorites=JSON.parse(localStorage.getItem("chem-formula-favorites")||"[]");}catch(e){formulaFavorites=[];}
+function saveFormulaFavorites(){try{localStorage.setItem("chem-formula-favorites",JSON.stringify(formulaFavorites));}catch(e){}}
+
+function switchSubject(s){
+currentSubject=s;
+document.querySelectorAll(".subject-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.subject===s));
+const sel=document.getElementById("formulaTopicFilter");
+sel.innerHTML='<option value="">Все темы</option>';
+Object.entries(topicsBySubject[s]).forEach(([k,v])=>{sel.innerHTML+=`<option value="${k}">${v}</option>`;});
+renderFormulas();
 }
 
-function checkAnswer() {
-  if (!currentTask) return;
-  const user = document.getElementById("taskAnswer").value.trim();
-  const fb = document.getElementById("trainerFeedback");
-  const correct = String(currentTask.answer);
-  fb.hidden = false;
-  if (user === correct || (parseFloat(user) === parseFloat(correct))) {
-    fb.className = "trainer-feedback correct";
-    fb.textContent = "Верно! Молодец.";
-  } else {
-    fb.className = "trainer-feedback incorrect";
-    fb.textContent = `Неверно. Правильный ответ: ${correct}. Нажмите «Показать решение», чтобы разобраться.`;
-  }
+function renderFormulaCard(f){
+const isFav=formulaFavorites.includes(f.id);
+const topicLabel=topicsBySubject[f.subject][f.topic]||"";
+return `<article class="formula-card" data-topic="${f.topic}">
+<div class="card-head"><div class="card-title">${f.title}</div><div class="badges"><span class="badge topic">${topicLabel}</span><span class="badge">${f.grade} класс</span></div></div>
+<div class="main-formula">${f.formula}</div>
+${f.formulaDetails?`<div class="formula-details">${f.formulaDetails}</div>`:""}
+<div class="what">${f.what}</div>
+<div class="symbols">${f.symbols.map(s=>`<div><strong>${s.sym}</strong> — <em>${s.desc}</em>${s.unit?" <em>["+s.unit+"]</em>":""}</div>`).join("")}</div>
+${f.tip?`<div class="tip">💡 ${f.tip}</div>`:""}
+<div class="example-box" id="ex-${f.id}" hidden><div class="task">📝 ${f.example.task}</div>${f.example.steps.map((s,i)=>`<div class="step">${i+1}. ${s}</div>`).join("")}<div class="answer">Ответ: ${f.example.answer}</div></div>
+<div class="card-actions"><button class="primary" onclick="toggleFormulaExample('${f.id}',this)">Показать пример</button><button class="${isFav?"fav-active":""}" onclick="toggleFormulaFavorite('${f.id}',this)">${isFav?"★ В избранном":"☆ В избранное"}</button></div>
+</article>`;
 }
 
-function showSolution() {
-  if (!currentTask) return;
-  const sol = document.getElementById("trainerSolution");
-  sol.hidden = false;
-  sol.textContent = currentTask.solution;
+function toggleFormulaExample(id,btn){
+const b=document.getElementById("ex-"+id);
+if(!b)return;
+b.hidden=!b.hidden;
+btn.textContent=b.hidden?"Показать пример":"Скрыть решение";
 }
 
-/* ================================================================
-   ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ
-   ================================================================ */
-document.getElementById("themeToggle").addEventListener("click", () => {
-  const html = document.documentElement;
-  const current = html.getAttribute("data-theme");
-  html.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+function toggleFormulaFavorite(id,btn){
+const i=formulaFavorites.indexOf(id);
+if(i>=0){formulaFavorites.splice(i,1);btn.textContent="☆ В избранное";btn.classList.remove("fav-active");}
+else{formulaFavorites.push(id);btn.textContent="★ В избранном";btn.classList.add("fav-active");}
+saveFormulaFavorites();
+if(document.getElementById("formulaFavOnly").checked)renderFormulas();
+}
+
+function renderFormulas(){
+const q=(document.getElementById("formulaSearch").value||"").trim().toLowerCase();
+const t=document.getElementById("formulaTopicFilter").value;
+const g=document.getElementById("formulaGradeFilter").value;
+const f=document.getElementById("formulaFavOnly").checked;
+const filtered=formulasData.filter(x=>{
+if(x.subject!==currentSubject)return false;
+if(t&&x.topic!==t)return false;
+if(g&&x.grade!==g)return false;
+if(f&&!formulaFavorites.includes(x.id))return false;
+if(q){const h=(x.title+" "+x.what+" "+x.formula+" "+(x.formulaDetails||"")+" "+topicsBySubject[x.subject][x.topic]).toLowerCase();if(!h.includes(q))return false;}
+return true;
+});
+document.getElementById("formulasGrid").innerHTML=filtered.map(renderFormulaCard).join("");
+document.getElementById("formulasEmpty").hidden=filtered.length>0;
+}
+
+document.getElementById("formulaSearch").addEventListener("input",renderFormulas);
+document.getElementById("formulaTopicFilter").addEventListener("change",renderFormulas);
+document.getElementById("formulaGradeFilter").addEventListener("change",renderFormulas);
+document.getElementById("formulaFavOnly").addEventListener("change",renderFormulas);
+
+/* ============ ТРЕНАЖЁР ============ */
+let currentTask=null;
+let trainerStats={correct:0,total:0};
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+const trainerTasks={
+easy:[
+()=>{const el=pick(elements.filter(e=>e.isSchool));return{text:`Вычислите молярную массу простого вещества ${el.symbol} (Ar = ${el.ar}).`,answer:el.ar,solution:`M(${el.symbol}) = ${el.ar} г/моль.`};},
+()=>{const el=pick(elements.filter(e=>e.isSchool));return{text:`Сколько протонов в атоме ${el.nameRu} (Z = ${el.z})? Введите число.`,answer:el.z,solution:`p = Z = ${el.z}. Электронов тоже ${el.z}.`};},
+()=>{const el=pick(elements.filter(e=>e.isSchool&&e.subgroup==="A"&&e.valences[0]>0));const v=el.valences[0];return{text:`Высшая валентность ${el.nameRu} (${el.symbol})?`,answer:v,solution:`В группе ${el.group}, валентность = ${["","I","II","III","IV","V","VI","VII","VIII"][v]||v}.`};},
+()=>{const el=pick(elements.filter(e=>e.isSchool));return{text:`Сколько нейтронов в атоме ${el.nameRu} (Z = ${el.z}, Ar ≈ ${Math.round(el.ar)})?`,answer:Math.round(el.ar)-el.z,solution:`n = Ar − Z = ${Math.round(el.ar)} − ${el.z} = ${Math.round(el.ar)-el.z}.`};}
+],
+medium:[
+()=>{const ex=pick([{f:"H₂O",s:"O",ar:16,n:1,M:18,w:"воде"},{f:"CO₂",s:"C",ar:12,n:1,M:44,w:"CO₂"},{f:"NaCl",s:"Na",ar:23,n:1,M:58.5,w:"NaCl"},{f:"CaO",s:"Ca",ar:40,n:1,M:56,w:"CaO"}]);const w=(ex.ar*ex.n/ex.M*100).toFixed(1);return{text:`Массовая доля ${ex.s} в ${ex.w}? Ответ в % (только число).`,answer:parseFloat(w),solution:`Mr(${ex.f}) = ${ex.M}. ω = (${ex.ar}·${ex.n})/${ex.M}·100% ≈ ${w}%.`};},
+()=>{const ex=pick([{f:"H₂O",M:18,m:ri(2,9)*18},{f:"CO₂",M:44,m:ri(1,4)*44},{f:"CaO",M:56,m:ri(1,4)*56}]);return{text:`Найдите количество вещества (моль) для ${ex.m} г ${ex.f}. M = ${ex.M} г/моль.`,answer:ex.m/ex.M,solution:`n = ${ex.m}/${ex.M} = ${ex.m/ex.M} моль.`};},
+()=>{const V=pick([11.2,22.4,33.6,44.8,67.2]);return{text:`Сколько моль в ${V} л газа при н.у.?`,answer:V/22.4,solution:`n = ${V}/22.4 = ${V/22.4}.`};},
+()=>{const ex=pick([{f:"H₂SO₄",M:98,p:"2·1+32+4·16"},{f:"Ca(OH)₂",M:74,p:"40+2·(16+1)"},{f:"Al₂O₃",M:102,p:"2·27+3·16"},{f:"Fe₂O₃",M:160,p:"2·56+3·16"}]);return{text:`Молярная масса ${ex.f}? Ответ в г/моль.`,answer:ex.M,solution:`M = ${ex.p} = ${ex.M} г/моль.`};},
+()=>{const ex=pick([{f:"H₂O",M:18,m:ri(2,5)*18},{f:"CO₂",M:44,m:ri(1,3)*44}]);const n=ex.m/ex.M;const N=(n*6.02).toFixed(2);return{text:`Сколько молекул в ${ex.m} г ${ex.f}? Введите коэффициент перед 10²³.`,answer:parseFloat(N),solution:`n = ${ex.m}/${ex.M} = ${n}. N = ${n}·6,02·10²³ = ${N}·10²³.`};},
+()=>{const rho=pick([{n:"воды",v:1000,m:1,V:0.001},{n:"алюминия",v:2700,m:2.7,V:0.001}]);return{text:`Плотность ${rho.n}, если ${rho.m} кг занимает ${rho.V} м³? Ответ в кг/м³.`,answer:rho.v,solution:`ρ = m/V = ${rho.m}/${rho.V} = ${rho.v} кг/м³.`};}
+],
+hard:[
+()=>{const ex=pick([{f:"H₂O",M:18,m:36,name:"воды"},{f:"CO₂",M:44,m:88,name:"углекислого газа"},{f:"O₂",M:32,m:64,name:"кислорода"}]);const n=ex.m/ex.M;const N=(n*6.02).toFixed(2);return{text:`Сколько молекул в ${ex.m} г ${ex.name} (${ex.f})? Введите коэффициент перед 10²³.`,answer:parseFloat(N),solution:`n = ${ex.m}/${ex.M} = ${n} моль. N = ${n}·6,02·10²³ = ${N}·10²³.`};},
+()=>{const ex=pick([{text:"Сколько г воды образуется при сгорании 4 г водорода?",r:"2H₂ + O₂ → 2H₂O",s:["M(H₂)=2","n(H₂)=4/2=2 моль","n(H₂O)=2 моль","M(H₂O)=18","m=2·18=36 г"],a:36},{text:"Сколько г MgO из 6 г Mg? (2Mg + O₂ → 2MgO)",s:["M(Mg)=24","n(Mg)=6/24=0,25 моль","n(MgO)=0,25 моль","M(MgO)=40","m=0,25·40=10 г"],a:10},{text:"Сколько г CO₂ при сгорании 12 г углерода? (C + O₂ → CO₂)",s:["M(C)=12","n(C)=12/12=1 моль","n(CO₂)=1 моль","M(CO₂)=44","m=1·44=44 г"],a:44}]);return{text:ex.text,answer:ex.a,solution:`${ex.r}<br>${ex.s.map((s,i)=>`Шаг ${i+1}. ${s}`).join("<br>")}`};},
+()=>{return{text:"Масса кислорода в 180 г воды. M(H₂O)=18, ω(O)=88,9%. Ответ в г.",answer:160,solution:"Способ 1: m(O)=0,889·180≈160 г.<br>Способ 2: n(H₂O)=10 моль, n(O)=10, m=10·16=160 г."};},
+()=>{const ex=pick([{m:2,v:0,t:4,a:5},{m:4,v:2,t:2,a:1},{m:3,v:0,t:6,a:2}]);return{text:`Тело массой ${ex.m} кг, начальная скорость ${ex.v} м/с, ускорение ${ex.a} м/с². Какой путь за ${ex.t} с? Ответ в м.`,answer:ex.v*ex.t+0.5*ex.a*ex.t*ex.t,solution:`S = v₀t + at²/2 = ${ex.v}·${ex.t} + ${ex.a}·${ex.t*ex.t}/2 = ${ex.v*ex.t+0.5*ex.a*ex.t*ex.t} м.`};},
+()=>{const q=pick([{m:2,c:4200,dt:20},{m:3,c:500,dt:10},{m:1,c:4200,dt:50}]);const Q=q.m*q.c*q.dt;return{text:`Сколько теплоты (Дж) для нагрева ${q.m} кг вещества (c=${q.c}) на ${q.dt} °C?`,answer:Q,solution:`Q = cmΔt = ${q.c}·${q.m}·${q.dt} = ${Q} Дж.`};}
+]
+};
+
+function newTask(){
+const d=document.getElementById("trainerDifficulty").value;
+let pool;
+if(d==="all")pool=[...trainerTasks.easy,...trainerTasks.medium,...trainerTasks.hard];
+else pool=trainerTasks[d];
+currentTask=pick(pool)();
+currentTask.difficulty=d==="all"?"medium":d;
+const lbl={easy:"лёгкий",medium:"средний",hard:"сложный",medium:"смешанный"}[currentTask.difficulty]||currentTask.difficulty;
+const cls=currentTask.difficulty==="hard"?"hard":currentTask.difficulty==="easy"?"easy":"medium";
+document.getElementById("taskText").innerHTML=`<span class="trainer-difficulty-badge ${cls}">${lbl}</span><br>${currentTask.text}`;
+document.getElementById("taskAnswer").value="";
+document.getElementById("trainerFeedback").hidden=true;
+document.getElementById("trainerSolution").hidden=true;
+}
+
+function answersMatch(user,correct){
+const u=String(user).trim().replace(",",".").toLowerCase();
+const c=String(correct).trim().replace(",",".").toLowerCase();
+if(u===c)return true;
+const un=parseFloat(u),cn=parseFloat(c);
+if(!isNaN(un)&&!isNaN(cn))return Math.abs(un-cn)/Math.max(Math.abs(cn),1e-6)<0.02;
+return false;
+}
+
+function updateTrainerStats(){
+document.getElementById("trainerStats").textContent=`Верно: ${trainerStats.correct} / ${trainerStats.total}`;
+}
+
+function resetTrainerStats(){
+trainerStats={correct:0,total:0};
+updateTrainerStats();
+}
+
+function checkAnswer(){
+if(!currentTask)return;
+const u=document.getElementById("taskAnswer").value.trim();
+if(!u)return;
+const fb=document.getElementById("trainerFeedback");
+fb.hidden=false;
+trainerStats.total++;
+if(answersMatch(u,currentTask.answer)){
+trainerStats.correct++;
+fb.className="trainer-feedback correct";
+fb.textContent="Верно! Молодец.";
+}else{
+fb.className="trainer-feedback incorrect";
+fb.innerHTML=`Неверно. Правильный ответ: <strong>${currentTask.answer}</strong>. Нажмите «Показать решение».`;
+}
+updateTrainerStats();
+}
+
+function showSolution(){
+if(!currentTask)return;
+const s=document.getElementById("trainerSolution");
+s.hidden=false;
+s.innerHTML=currentTask.solution.replace(/\n/g,"<br>");
+}
+
+/* ============ ТЕМА ============ */
+document.getElementById("themeToggle").addEventListener("click",()=>{
+const h=document.documentElement;
+h.setAttribute("data-theme",h.getAttribute("data-theme")==="dark"?"light":"dark");
 });
 
-/* ================================================================
-   ИНИЦИАЛИЗАЦИЯ
-   ================================================================ */
+/* ============ СТАРТ ============ */
 renderTable();
+switchSubject("chem");
+updateTrainerStats();
+newTask();
 </script>
 </body>
 </html>
